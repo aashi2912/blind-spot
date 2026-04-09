@@ -189,23 +189,6 @@ Set environment variables in Vercel dashboard: `VITE_TMDB_KEY` and `LLM_API_KEY`
 
 ---
 
-## Portfolio Context
-
-This is the second of seven AI Product Manager portfolio projects. Each project uses deliberately non-overlapping AI techniques:
-
-| Concept | Vibe Route (Project 1) | Blind Spot (Project 2) |
-|---|---|---|
-| ML Technique | Spatial clustering (DBSCAN) | Content-based filtering |
-| Similarity | N/A | Cosine similarity / vectors |
-| LLM Usage | Text generation | Reasoning (chain-of-thought) |
-| Scoring | Density-based heuristics | Gap analysis + opportunity |
-| Domain | Maps / walking routes | Entertainment / Netflix |
-| Data Source | Google Maps Platform | TMDB API |
-
-10 distinct AI/ML concepts across 2 projects. Each with interview-ready explanations of why it was chosen over alternatives.
-
----
-
 ## Known Limitations
 
 - **Manual input friction** — Netflix has no public API. Users add titles via search. Mitigated by fast search-and-click UX and incremental feedback.
@@ -216,14 +199,3 @@ This is the second of seven AI Product Manager portfolio projects. Each project 
 
 ---
 
-## Author
-
-**Aashi Thakkar** — AI Product Manager
-- [Vibe Route](https://vibe-route.vercel.app) (Project 1)
-- Target companies: Google, Netflix, Spotify, Notion, Uber, Microsoft, Pinterest
-
----
-
-## License
-
-MIT
