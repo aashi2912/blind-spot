@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #0a0a0a;
+  color: #ffffff;
+  font-family: "DM Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input {
+  font-family: "DM Sans", sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 2px;
+}
+
+/* Genre pill colors */
+.genre-action { background: #ef4444; }
+.genre-adventure { background: #f97316; }
+.genre-animation { background: #a855f7; }
+.genre-comedy { background: #eab308; }
+.genre-crime { background: #6366f1; }
+.genre-documentary { background: #06b6d4; }
+.genre-drama { background: #8b5cf6; }
+.genre-family { background: #ec4899; }
+.genre-fantasy { background: #14b8a6; }
+.genre-history { background: #78716c; }
+.genre-horror { background: #dc2626; }
+.genre-music { background: #f59e0b; }
+.genre-mystery { background: #6366f1; }
+.genre-romance { background: #f472b6; }
+.genre-scifi { background: #22d3ee; }
+.genre-tvmovie { background: #9ca3af; }
+.genre-thriller { background: #7c3aed; }
+.genre-war { background: #78716c; }
+.genre-western { background: #d97706; }
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Pulse dot for loading */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.loading-dot {
+  animation: pulse-dot 1.4s infinite;
+}
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
