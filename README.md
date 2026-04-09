@@ -4,7 +4,7 @@
 
 An AI-powered tool that analyzes your viewing patterns, visualizes your content bubble, identifies unexplored genres, and uses LLM reasoning to build bridges from what you love to what you've never considered.
 
-**[Try it live →](https://blind-spot-app.vercel.app)**
+**[Try it live →](https://my-blind-spot.vercel.app/)**
 
 ---
 
