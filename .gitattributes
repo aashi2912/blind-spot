@@ -1,0 +1,18 @@
+# Tell GitHub's language detector to ignore frontend config boilerplate
+# This ensures the language bar reflects actual logic, not build tooling
+
+# Vite / build config
+vite.config.js        linguist-vendored
+postcss.config.js     linguist-vendored
+tailwind.config.js    linguist-vendored
+
+# Lock files (never meaningful for language stats)
+package-lock.json     linguist-vendored
+bun.lock              linguist-vendored
+
+# Static assets
+public/**             linguist-vendored
+index.html            linguist-vendored
+
+# Ensure Python notebooks are detected
+notebooks/**          linguist-detectable=true
