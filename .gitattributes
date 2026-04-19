@@ -1,5 +1,3 @@
-# Tell GitHub's language detector to ignore frontend config boilerplate
-# This ensures the language bar reflects actual logic, not build tooling
 
 # Vite / build config
 vite.config.js        linguist-vendored
