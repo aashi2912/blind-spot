@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import LandingScreen from "./screens/LandingScreen";
 import InputScreen from "./screens/InputScreen";
 import BubbleScreen from "./screens/BubbleScreen";
 import BlindSpotsScreen from "./screens/BlindSpotsScreen";
@@ -32,7 +33,7 @@ function NavBar({ screen, onNav }) {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState("input");
+  const [screen, setScreen] = useState("landing");
   const [watched, setWatched] = useState([]);
   const [profile, setProfileState] = useState(null);
   const [selectedBlindSpot, setSelectedBlindSpot] = useState(null);
@@ -107,6 +108,11 @@ export default function App() {
     setWatched([...updated]);
     setScreen("bubble");
   }, []);
+
+  // Landing is full-bleed (new design system); the flow below is the legacy shell.
+  if (screen === "landing") {
+    return <LandingScreen onStart={() => nav("input")} />;
+  }
 
   return (
     <div className="max-w-md mx-auto px-5 py-5 min-h-screen bg-spot-dark">
