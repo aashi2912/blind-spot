@@ -78,6 +78,50 @@ export default defineConfig(({ mode }) => {
           });
         },
       },
+      {
+        name: "tmdb-api-proxy",
+        configureServer(server) {
+          const TMDB_BASE = "https://api.themoviedb.org/3";
+          const ALLOWED_PREFIXES = ["/search", "/movie", "/tv", "/discover", "/trending", "/genre"];
+          server.middlewares.use("/api/tmdb", async (req, res) => {
+            res.setHeader("Content-Type", "application/json");
+            if (req.method !== "GET") {
+              res.statusCode = 405;
+              return res.end(JSON.stringify({ error: "Method not allowed" }));
+            }
+            const apiKey = env.TMDB_KEY;
+            if (!apiKey) {
+              res.statusCode = 500;
+              return res.end(JSON.stringify({ error: "TMDB key not configured (set TMDB_KEY in .env)" }));
+            }
+            const qIndex = req.url.indexOf("?");
+            const search = qIndex >= 0 ? req.url.slice(qIndex + 1) : "";
+            const params = new URLSearchParams(search);
+            const path = params.get("path");
+            if (!path || !path.startsWith("/")) {
+              res.statusCode = 400;
+              return res.end(JSON.stringify({ error: "Missing or invalid 'path' param" }));
+            }
+            if (!ALLOWED_PREFIXES.some((p) => path.startsWith(p))) {
+              res.statusCode = 400;
+              return res.end(JSON.stringify({ error: "Path not allowed" }));
+            }
+            const target = new URL(TMDB_BASE + path);
+            params.forEach((v, k) => { if (k !== "path") target.searchParams.set(k, v); });
+            target.searchParams.set("api_key", apiKey);
+            try {
+              const r = await fetch(target);
+              const data = await r.json();
+              res.statusCode = r.status;
+              res.end(JSON.stringify(data));
+            } catch (err) {
+              console.error("TMDB proxy error:", err);
+              res.statusCode = 502;
+              res.end(JSON.stringify({ error: "TMDB request failed" }));
+            }
+          });
+        },
+      },
     ],
   };
 });

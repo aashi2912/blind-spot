@@ -1,34 +1,29 @@
 /**
- * TMDB API Wrapper
- * All endpoints needed for Blind Spot.
- * In-memory cache to avoid redundant calls.
+ * TMDB API Wrapper (client)
+ * All requests go through /api/tmdb (serverless proxy) so the TMDB key stays
+ * on the server. Every exported function keeps the SAME signature as before.
+ * In-memory cache avoids redundant calls within a session.
  */
 
-const BASE = "https://api.themoviedb.org/3";
 const cache = new Map();
 
-function getKey() {
-  return import.meta.env.VITE_TMDB_KEY;
-}
-
 async function tmdbGet(path, params = {}) {
-  const url = new URL(BASE + path);
-  url.searchParams.set("api_key", getKey());
+  const qs = new URLSearchParams({ path });
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
+    if (v !== undefined && v !== null) qs.set(k, String(v));
   });
 
-  const cacheKey = url.toString();
-  if (cache.has(cacheKey)) return cache.get(cacheKey);
+  const requestUrl = "/api/tmdb?" + qs.toString();
+  if (cache.has(requestUrl)) return cache.get(requestUrl);
 
-  const res = await fetch(url);
+  const res = await fetch(requestUrl);
   if (!res.ok) {
-    const errText = await res.text();
+    const errText = await res.text().catch(() => "");
     throw new Error("TMDB " + res.status + ": " + errText);
   }
 
   const data = await res.json();
-  cache.set(cacheKey, data);
+  cache.set(requestUrl, data);
   return data;
 }
 
@@ -153,7 +148,7 @@ export async function getGenreList() {
   return tmdbGet("/genre/movie/list", { language: "en-US" });
 }
 
-// --- Image helpers ---
+// --- Image helpers (no key needed — public CDN) ---
 export function posterUrl(path, size = "w342") {
   if (!path) return null;
   return "https://image.tmdb.org/t/p/" + size + path;
