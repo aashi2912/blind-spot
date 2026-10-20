@@ -1,0 +1,110 @@
+{
+  "description": "Golden set for evaluating Blind Spot's bridge-reasoning LLM feature. Each case is a fixed (user taste -> candidate film) pair. The candidate object IS the ground truth: groundedness is judged as 'did the reasoning stay within these fields', so fixtures need not be factually real. 'expectation' labels the intended behaviour: bridge (clear link), stretch (weak but honest link), refuse (no genuine link -> model should output NO_BRIDGE).",
+  "cases": [
+    {
+      "id": "b01", "expectation": "bridge", "blindSpotGenre": "War",
+      "userFavorites": ["The Dark Knight (moral dilemma, chaos, vigilante)", "Prisoners (obsession, justice, abduction)", "Se7en (serial killer, dread, investigation)"],
+      "candidate": {"title": "Hacksaw Ridge", "year": "2016", "genres": "War, Drama, History", "keywords": "moral conviction, pacifism, battlefield, courage under fire", "overview": "A WWII army medic refuses to carry a weapon and saves dozens of wounded men during a brutal battle.", "rating": 8.1}
+    },
+    {
+      "id": "b02", "expectation": "bridge", "blindSpotGenre": "Documentary",
+      "userFavorites": ["The Social Network (ambition, betrayal, startup)", "The Wolf of Wall Street (greed, excess, fraud)", "Gone Girl (deception, media, marriage)"],
+      "candidate": {"title": "The Inventor", "year": "2019", "genres": "Documentary", "keywords": "startup fraud, ambition, deception, Silicon Valley, downfall", "overview": "A documentary tracing how a celebrated health-tech founder built a company on a lie and deceived investors.", "rating": 7.1}
+    },
+    {
+      "id": "b03", "expectation": "bridge", "blindSpotGenre": "Western",
+      "userFavorites": ["No Country for Old Men (fate, chase, violence)", "Prisoners (justice, obsession)", "Sicario (moral grey, cartel, dread)"],
+      "candidate": {"title": "Hell or High Water", "year": "2016", "genres": "Western, Crime, Drama", "keywords": "bank robbery, brothers, moral grey, pursuit, economic desperation", "overview": "Two brothers rob banks to save their family ranch while a weary ranger closes in.", "rating": 7.6}
+    },
+    {
+      "id": "b04", "expectation": "bridge", "blindSpotGenre": "Animation",
+      "userFavorites": ["Inception (dream, reality, layered)", "Interstellar (space, time, fatherhood)", "Arrival (language, time, grief)"],
+      "candidate": {"title": "Paprika", "year": "2006", "genres": "Animation, Sci-Fi, Thriller", "keywords": "dreams, reality blurring, identity, technology, subconscious", "overview": "A device that lets therapists enter patients' dreams is stolen, blurring the line between dreams and reality.", "rating": 7.7}
+    },
+    {
+      "id": "b05", "expectation": "bridge", "blindSpotGenre": "Musical",
+      "userFavorites": ["Whiplash (ambition, mentor, obsession)", "Black Swan (perfectionism, pressure, art)", "The Social Network (ambition, drive)"],
+      "candidate": {"title": "La La Land", "year": "2016", "genres": "Musical, Drama, Romance", "keywords": "ambition, artistic sacrifice, dreams, jazz, bittersweet", "overview": "A jazz musician and an aspiring actress chase their creative dreams, testing their relationship against ambition.", "rating": 8.0}
+    },
+    {
+      "id": "b06", "expectation": "bridge", "blindSpotGenre": "Horror",
+      "userFavorites": ["Gone Girl (deception, marriage, dread)", "Shutter Island (paranoia, memory, asylum)", "Prisoners (obsession, dread)"],
+      "candidate": {"title": "Hereditary", "year": "2018", "genres": "Horror, Drama, Mystery", "keywords": "family trauma, grief, dread, unraveling, slow burn", "overview": "After a death in the family, a household unravels as buried secrets and dread consume them.", "rating": 7.3}
+    },
+    {
+      "id": "b07", "expectation": "bridge", "blindSpotGenre": "Romance",
+      "userFavorites": ["Interstellar (time, love, fatherhood)", "Arrival (time, grief, language)", "Her (connection, loneliness, technology)"],
+      "candidate": {"title": "Eternal Sunshine of the Spotless Mind", "year": "2004", "genres": "Romance, Sci-Fi, Drama", "keywords": "memory erasure, love, time, regret, identity", "overview": "A couple erase each other from their memories, then rediscover why they fell in love.", "rating": 8.3}
+    },
+    {
+      "id": "b08", "expectation": "bridge", "blindSpotGenre": "History",
+      "userFavorites": ["The Social Network (ambition, legal battle, ego)", "Steve Jobs (ego, genius, conflict)", "Moneyball (data, underdog, system)"],
+      "candidate": {"title": "The Imitation Game", "year": "2014", "genres": "History, Drama, War", "keywords": "genius, codebreaking, isolation, institutional conflict, ambition", "overview": "A brilliant mathematician races to crack an unbreakable code while clashing with the institutions around him.", "rating": 8.0}
+    },
+    {
+      "id": "b09", "expectation": "bridge", "blindSpotGenre": "Documentary",
+      "userFavorites": ["Whiplash (obsession, mastery)", "Jiro-style drive", "Black Swan (perfectionism)"],
+      "candidate": {"title": "Free Solo", "year": "2018", "genres": "Documentary", "keywords": "obsession, mastery, risk, perfectionism, single-minded pursuit", "overview": "A climber prepares to scale a 3,000-foot wall with no ropes, demanding total perfection.", "rating": 8.1}
+    },
+    {
+      "id": "b10", "expectation": "bridge", "blindSpotGenre": "Western",
+      "userFavorites": ["Interstellar (frontier, survival, resolve)", "The Martian (survival, problem-solving)", "Gravity (survival, isolation)"],
+      "candidate": {"title": "The Revenant", "year": "2015", "genres": "Western, Adventure, Drama", "keywords": "survival, wilderness, endurance, revenge, isolation", "overview": "A frontiersman left for dead crawls across a brutal wilderness to survive and settle a score.", "rating": 7.5}
+    },
+    {
+      "id": "b11", "expectation": "bridge", "blindSpotGenre": "Comedy",
+      "userFavorites": ["The Wolf of Wall Street (excess, greed, satire)", "The Big Short (finance, satire, system)", "Social Network (ambition)"],
+      "candidate": {"title": "The Menu", "year": "2022", "genres": "Comedy, Horror, Thriller", "keywords": "class satire, excess, pretension, dark comedy, comeuppance", "overview": "Guests at an exclusive restaurant discover the celebrity chef has a deadly menu satirizing wealth and pretension.", "rating": 7.2}
+    },
+    {
+      "id": "b12", "expectation": "bridge", "blindSpotGenre": "Family",
+      "userFavorites": ["Interstellar (fatherhood, time, sacrifice)", "The Pursuit of Happyness (perseverance, parent-child)"],
+      "candidate": {"title": "Big Fish", "year": "2003", "genres": "Family, Fantasy, Drama", "keywords": "father-son, storytelling, legacy, reconciliation, mortality", "overview": "A dying father's tall tales force his skeptical son to reconcile the man he knew with the legend.", "rating": 7.8}
+    },
+    {
+      "id": "s01", "expectation": "stretch", "blindSpotGenre": "Romance",
+      "userFavorites": ["Se7en (dread, investigation, dark)", "Prisoners (obsession, abduction)"],
+      "candidate": {"title": "Before Sunrise", "year": "1995", "genres": "Romance, Drama", "keywords": "conversation, connection, one night, fleeting, romance", "overview": "Two strangers meet on a train and spend one night walking and talking through Vienna.", "rating": 8.1}
+    },
+    {
+      "id": "s02", "expectation": "stretch", "blindSpotGenre": "Musical",
+      "userFavorites": ["No Country for Old Men (violence, fate)", "Sicario (cartel, dread)"],
+      "candidate": {"title": "Chicago", "year": "2002", "genres": "Musical, Crime, Comedy", "keywords": "crime, fame, manipulation, murder, spectacle", "overview": "Two murderesses compete for fame and freedom in a dazzling, cynical jazz-age spectacle.", "rating": 7.2}
+    },
+    {
+      "id": "s03", "expectation": "stretch", "blindSpotGenre": "Animation",
+      "userFavorites": ["Gone Girl (deception, marriage)", "Marriage Story (relationship, conflict)"],
+      "candidate": {"title": "Anomalisa", "year": "2015", "genres": "Animation, Drama", "keywords": "loneliness, connection, monotony, midlife, intimacy", "overview": "A lonely motivational speaker has a brief connection that cuts through his numbing routine.", "rating": 7.2}
+    },
+    {
+      "id": "s04", "expectation": "stretch", "blindSpotGenre": "Western",
+      "userFavorites": ["Arrival (language, patience, grief)", "Her (connection, quiet)"],
+      "candidate": {"title": "First Cow", "year": "2019", "genres": "Western, Drama", "keywords": "friendship, quiet, frontier, gentle, economics", "overview": "Two outsiders on the 1820s frontier build a quiet friendship and a small business venture.", "rating": 7.3}
+    },
+    {
+      "id": "r01", "expectation": "refuse", "blindSpotGenre": "Horror",
+      "userFavorites": ["27 Dresses (light romance, feel-good)", "The Proposal (rom-com, playful)"],
+      "candidate": {"title": "The Human Centipede", "year": "2009", "genres": "Horror", "keywords": "body horror, torture, grotesque, disturbing", "overview": "A deranged surgeon performs grotesque experiments on his captives.", "rating": 4.4}
+    },
+    {
+      "id": "r02", "expectation": "refuse", "blindSpotGenre": "Documentary",
+      "userFavorites": ["The Dark Knight (action, chaos)", "John Wick (action, revenge)"],
+      "candidate": {"title": "Our Planet: Coasts", "year": "2019", "genres": "Documentary", "keywords": "nature, wildlife, oceans, conservation", "overview": "A nature documentary surveying coastal ecosystems and the wildlife that depends on them.", "rating": 8.9}
+    },
+    {
+      "id": "r03", "expectation": "refuse", "blindSpotGenre": "Musical",
+      "userFavorites": ["Sicario (cartel, dread, moral grey)", "Se7en (serial killer, dread)"],
+      "candidate": {"title": "Mamma Mia!", "year": "2008", "genres": "Musical, Comedy, Romance", "keywords": "feel-good, wedding, pop songs, sunshine, nostalgia", "overview": "A bride-to-be invites three men who might be her father to a sunny Greek island wedding full of pop songs.", "rating": 6.4}
+    },
+    {
+      "id": "r04", "expectation": "refuse", "blindSpotGenre": "Family",
+      "userFavorites": ["Hereditary (dread, trauma)", "The Witch (folk horror, dread)"],
+      "candidate": {"title": "Paddington 2", "year": "2017", "genres": "Family, Comedy, Adventure", "keywords": "kindness, gentle, feel-good, marmalade, community", "overview": "A polite young bear spreads kindness and clears his name after being wrongly jailed.", "rating": 7.8}
+    },
+    {
+      "id": "r05", "expectation": "refuse", "blindSpotGenre": "Action",
+      "userFavorites": ["Before Sunrise (quiet, conversation, romance)", "Lost in Translation (mood, stillness)"],
+      "candidate": {"title": "Transformers", "year": "2007", "genres": "Action, Sci-Fi", "keywords": "explosions, robots, spectacle, military, loud", "overview": "Giant warring robots bring their battle to Earth in a loud spectacle of explosions.", "rating": 7.0}
+    }
+  ]
+}

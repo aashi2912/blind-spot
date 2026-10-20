@@ -116,10 +116,12 @@ export async function generateBridgeReasoning(userFavorites, candidate) {
     }
 
     const data = await response.json();
-    if (data.fallback || !data.reasoning || data.reasoning === "NO_BRIDGE") {
-      if (data.reasoning === "NO_BRIDGE") return null; // Skip this candidate
-      return fallbackReasoning(candidate);
-    }
+    // Refusal detection is startsWith, not exact match: the model often emits
+    // "NO_BRIDGE" followed by a rationalization. Exact match let those leak to
+    // users as half-hearted bridges (caught by the eval harness; see /evals).
+    const text = (data.reasoning || "").trim();
+    if (data.fallback || !text) return fallbackReasoning(candidate);
+    if (text.toUpperCase().startsWith("NO_BRIDGE")) return null; // genuine no-fit — drop it
 
     return data.reasoning;
   } catch {
