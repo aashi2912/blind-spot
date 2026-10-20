@@ -15,23 +15,20 @@ export default defineConfig(({ mode }) => {
               res.statusCode = 405;
               return res.end(JSON.stringify({ error: "Method not allowed" }));
             }
-
             const apiKey = env.LLM_API_KEY;
             if (!apiKey) {
               res.setHeader("Content-Type", "application/json");
               return res.end(JSON.stringify({ reasoning: null, fallback: true }));
             }
-
             try {
               let body = "";
               for await (const chunk of req) body += chunk;
               const { userFavorites, candidate } = JSON.parse(body);
-
               const prompt = [
                 "You are a film expert helping someone discover movies outside their comfort zone.",
                 "",
                 "USER'S FAVORITE TITLES AND THEMES:",
-                ...userFavorites.map(f => "- " + f),
+                ...userFavorites.map((f) => "- " + f),
                 "",
                 "CANDIDATE MOVIE (from a genre they have never watched):",
                 "- Title: " + candidate.title + " (" + candidate.year + ")",
@@ -45,35 +42,65 @@ export default defineConfig(({ mode }) => {
                 "Do NOT invent facts. Only reference data provided above.",
                 'If no genuine connection exists, respond with exactly: NO_BRIDGE',
               ].join("\n");
-
               const response = await fetch("https://api.anthropic.com/v1/messages", {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "x-api-key": apiKey,
-                  "anthropic-version": "2023-06-01",
-                },
-                body: JSON.stringify({
-                  model: "claude-haiku-4-5-20251001",
-                  max_tokens: 200,
-                  messages: [{ role: "user", content: prompt }],
-                }),
+                headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+                body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 200, messages: [{ role: "user", content: prompt }] }),
               });
-
               if (!response.ok) {
                 res.setHeader("Content-Type", "application/json");
                 return res.end(JSON.stringify({ reasoning: null, fallback: true }));
               }
-
               const data = await response.json();
-              const reasoning = data.content?.[0]?.text || null;
-
               res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify({ reasoning }));
+              res.end(JSON.stringify({ reasoning: data.content?.[0]?.text || null }));
             } catch (err) {
               console.error("Bridge proxy error:", err);
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ reasoning: null, fallback: true }));
+            }
+          });
+        },
+      },
+      {
+        name: "summary-api-proxy",
+        configureServer(server) {
+          server.middlewares.use("/api/summary", async (req, res) => {
+            res.setHeader("Content-Type", "application/json");
+            if (req.method !== "POST") {
+              res.statusCode = 405;
+              return res.end(JSON.stringify({ error: "Method not allowed" }));
+            }
+            const apiKey = env.LLM_API_KEY;
+            if (!apiKey) return res.end(JSON.stringify({ summary: null, fallback: true }));
+            try {
+              let body = "";
+              for await (const chunk of req) body += chunk;
+              const { titleCount, topGenres = [], topDecade, language } = JSON.parse(body || "{}");
+              const genreLine = topGenres.map((g) => g.name + " " + g.pct + "%").join(", ");
+              const prompt = [
+                "You describe a person's streaming taste as a single vivid one-line identity.",
+                "",
+                "DATA:",
+                "- Titles watched: " + titleCount,
+                "- Top genres: " + genreLine,
+                "- Dominant decade: " + (topDecade || "unknown"),
+                "- Language: " + (language ? language.pct + "% " + language.name : "unknown"),
+                "",
+                "Write ONE sentence, max 18 words, describing them (e.g. 'A prestige-crime loyalist with a 2010s streak').",
+                "Be specific and a little playful, but accurate to the data. No preamble, no quotation marks.",
+              ].join("\n");
+              const response = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+                body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 60, messages: [{ role: "user", content: prompt }] }),
+              });
+              if (!response.ok) return res.end(JSON.stringify({ summary: null, fallback: true }));
+              const data = await response.json();
+              res.end(JSON.stringify({ summary: data.content?.[0]?.text || null }));
+            } catch (err) {
+              console.error("Summary proxy error:", err);
+              res.end(JSON.stringify({ summary: null, fallback: true }));
             }
           });
         },

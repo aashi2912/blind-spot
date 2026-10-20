@@ -20,9 +20,7 @@ function NavBar({ screen, onNav }) {
           key={s}
           onClick={() => onNav(s)}
           className={`flex-1 py-2.5 px-1 rounded-xl text-xs font-bold font-body transition-all ${
-            screen === s
-              ? "bg-spot-red text-white"
-              : "text-spot-muted hover:text-white"
+            screen === s ? "bg-spot-red text-white" : "text-spot-muted hover:text-white"
           }`}
         >
           {SCREEN_LABELS[i]}
@@ -39,12 +37,10 @@ export default function App() {
   const [selectedBlindSpot, setSelectedBlindSpot] = useState(null);
   const [selectedMovie, setSelectedMovie] = useState(null);
 
-  // Load watched from localStorage on mount
   useEffect(() => {
     setWatched(getWatched());
   }, []);
 
-  // Rebuild profile whenever watched list changes
   useEffect(() => {
     if (watched.length >= 3) {
       const p = buildTasteProfile(watched);
@@ -53,11 +49,9 @@ export default function App() {
     }
   }, [watched]);
 
-  // Add a title to watched list + fetch keywords async
   const handleAddTitle = useCallback(async (title) => {
     const updated = addWatched(title);
     setWatched([...updated]);
-
     try {
       const kws = await getKeywords(title.id, title.media_type);
       const withKws = updateWatchedKeywords(title.id, title.media_type, kws);
@@ -67,7 +61,6 @@ export default function App() {
     }
   }, []);
 
-  // Bulk import from Netflix CSV (already enriched with genres by InputScreen)
   const handleBulkImport = useCallback((titles) => {
     const current = getWatched();
     const seen = new Set(current.map((t) => t.id + ":" + t.media_type));
@@ -81,12 +74,8 @@ export default function App() {
     }
     setWatchedList(merged);
     setWatched([...merged]);
-
-    // Background: fill keywords for the most-watched subset so the themes panel populates.
     (async () => {
-      const top = [...titles]
-        .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
-        .slice(0, 20);
+      const top = [...titles].sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0)).slice(0, 20);
       for (const t of top) {
         try {
           const kws = await getKeywords(t.id, t.media_type);
@@ -99,28 +88,23 @@ export default function App() {
     })();
   }, []);
 
-  // Remove a title
   const handleRemoveTitle = useCallback((id, mediaType) => {
     const updated = removeWatched(id, mediaType);
     setWatched([...updated]);
   }, []);
 
-  // Navigate
   const nav = useCallback((s) => setScreen(s), []);
 
-  // Navigate to bridges for a specific blind spot
   const handleExploreBlindSpot = useCallback((blindSpot) => {
     setSelectedBlindSpot(blindSpot);
     setScreen("bridges");
   }, []);
 
-  // Navigate to detail for a specific movie
   const handleViewDetail = useCallback((movie) => {
     setSelectedMovie(movie);
     setScreen("detail");
   }, []);
 
-  // Mark as watched from detail screen
   const handleMarkWatched = useCallback(async (movie) => {
     const title = {
       id: movie.id,
@@ -140,14 +124,24 @@ export default function App() {
     setScreen("bubble");
   }, []);
 
-  // Landing is full-bleed (new design system); the flow below is the legacy shell.
+  // Full-bleed screens on the new design system.
   if (screen === "landing") {
     return <LandingScreen onStart={() => nav("input")} />;
   }
+  if (screen === "bubble") {
+    return (
+      <BubbleScreen
+        profile={profile}
+        watched={watched}
+        onViewBlindSpots={() => nav("blindspots")}
+        onGoBack={() => nav("input")}
+      />
+    );
+  }
 
+  // Legacy shell for screens not yet redesigned (input, blindspots, bridges, detail).
   return (
     <div className="max-w-md mx-auto px-5 py-5 min-h-screen bg-spot-dark">
-      {/* Header */}
       <div className="flex items-center gap-2 mb-5">
         <span className="text-xl">🎬</span>
         <span className="text-lg font-extrabold font-body text-white">Blind Spot</span>
@@ -165,14 +159,6 @@ export default function App() {
             onAnalyze={() => nav("bubble")}
             onImportMany={handleBulkImport}
             profile={profile}
-          />
-        )}
-        {screen === "bubble" && (
-          <BubbleScreen
-            profile={profile}
-            watched={watched}
-            onViewBlindSpots={() => nav("blindspots")}
-            onGoBack={() => nav("input")}
           />
         )}
         {screen === "blindspots" && (
