@@ -4,6 +4,7 @@ import { GENRES, GENRE_COLORS } from "../utils/constants";
 import { computeBubbleScore } from "../services/bubbleScore";
 import { templateSummary, generateTasteSummary } from "../services/tasteSummary";
 import { shareProfile } from "../utils/shareCard";
+import { getSaved } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
@@ -13,12 +14,7 @@ const PAGE_BG = {
     "radial-gradient(60% 45% at 80% 0%, rgba(124,92,255,0.16), transparent 70%), radial-gradient(40% 35% at 5% 100%, rgba(255,138,91,0.07), transparent 70%)",
 };
 
-const PART_LABELS = {
-  genre: "Genre focus",
-  breadth: "Few genres",
-  language: "One language",
-  decade: "One era",
-};
+const PART_LABELS = { genre: "Genre focus", breadth: "Few genres", language: "One language", decade: "One era" };
 
 const SHARE_LABEL = {
   working: "Generating…",
@@ -31,13 +27,12 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
   const [summary, setSummary] = useState(() => (profile ? templateSummary(profile) : ""));
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [shareStatus, setShareStatus] = useState(null);
+  const [saved] = useState(() => getSaved());
 
   useEffect(() => {
     let alive = true;
     if (profile) {
-      generateTasteSummary(profile).then((s) => {
-        if (alive && s) setSummary(s);
-      });
+      generateTasteSummary(profile).then((s) => { if (alive && s) setSummary(s); });
     }
     return () => { alive = false; };
   }, [profile]);
@@ -73,7 +68,6 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        {/* Top bar */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2 font-bold">
             <svg viewBox="0 0 26 26" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -83,12 +77,9 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
             </svg>
             Blind Spot
           </div>
-          <button onClick={onGoBack} className="text-sm text-ink-muted hover:text-ink font-body transition-colors">
-            Start over
-          </button>
+          <button onClick={onGoBack} className="text-sm text-ink-muted hover:text-ink font-body transition-colors">Start over</button>
         </div>
 
-        {/* Score centerpiece */}
         <div className="text-center animate-score mb-3">
           <p className="text-ink-muted font-body text-sm mb-2">Your Bubble Score</p>
           <div className="font-brand font-bold leading-none tracking-tight">
@@ -99,22 +90,16 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
           <p className="text-ink-muted font-body mt-3 max-w-md mx-auto">{summary}</p>
         </div>
 
-        {/* Share + explain */}
         <div className="flex flex-col items-center gap-2 mb-10">
           <Button variant="accent" onClick={handleShare} disabled={shareStatus === "working"}>
             {SHARE_LABEL[shareStatus] || "Share my bubble"}
           </Button>
-          <button
-            onClick={() => setShowBreakdown((v) => !v)}
-            className="text-xs text-primary-soft hover:text-primary font-body underline underline-offset-2"
-          >
+          <button onClick={() => setShowBreakdown((v) => !v)} className="text-xs text-primary-soft hover:text-primary font-body underline underline-offset-2">
             {showBreakdown ? "Hide" : "How is this scored?"}
           </button>
           {showBreakdown && (
             <Card className="p-4 mt-1 text-left w-full">
-              <p className="text-xs text-ink-muted font-body mb-3">
-                Higher means a tighter bubble. It blends four signals from your history:
-              </p>
+              <p className="text-xs text-ink-muted font-body mb-3">Higher means a tighter bubble. It blends four signals from your history:</p>
               {Object.entries(parts).map(([k, v]) => (
                 <div key={k} className="flex items-center gap-3 mb-2">
                   <span className="text-xs text-ink w-24 font-body">{PART_LABELS[k]}</span>
@@ -128,7 +113,6 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
           )}
         </div>
 
-        {/* Genre radar */}
         <Card className="p-5 mb-5">
           <p className="text-sm font-bold font-body mb-1">The shape of your taste</p>
           <p className="text-xs text-ink-muted font-body mb-3">
@@ -143,7 +127,6 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
           </ResponsiveContainer>
         </Card>
 
-        {/* Genre breakdown */}
         <Card className="p-5 mb-5">
           <p className="text-sm font-bold font-body mb-3">Genre breakdown</p>
           {activeGenres.slice(0, 8).map((g) => {
@@ -160,7 +143,6 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
           })}
         </Card>
 
-        {/* Decade + Language */}
         <div className="grid grid-cols-2 gap-4 mb-5">
           <Card className="p-4">
             <p className="text-xs font-bold font-body mb-3">Decade skew</p>
@@ -189,9 +171,8 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
           </Card>
         </div>
 
-        {/* Themes */}
         {keywordVector.length > 0 && (
-          <Card className="p-5 mb-6">
+          <Card className="p-5 mb-5">
             <p className="text-sm font-bold font-body mb-3">Your recurring themes</p>
             <div className="flex flex-wrap gap-1.5">
               {keywordVector.slice(0, 15).map((kw, i) => (
@@ -201,7 +182,21 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
           </Card>
         )}
 
-        {/* CTAs */}
+        {saved.length > 0 && (
+          <Card className="p-5 mb-6 border-accent/30">
+            <p className="text-sm font-bold font-body mb-3">Your watchlist · {saved.length}</p>
+            <div className="flex flex-col gap-2">
+              {saved.slice(0, 6).map((s) => (
+                <div key={s.id} className="flex items-center gap-2 text-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                  <span className="text-ink font-body truncate">{s.title}</span>
+                  <span className="text-ink-muted font-body text-xs">{(s.release_date || "").slice(0, 4)}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <Button className="w-full mb-3" size="lg" onClick={onViewBlindSpots}>See my blind spots</Button>
         <Button className="w-full" variant="ghost" onClick={onGoBack}>Add more titles</Button>
       </div>

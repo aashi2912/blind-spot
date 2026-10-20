@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getDetails, posterUrl, backdropUrl } from "../services/tmdbApi";
 import { GENRE_COLORS } from "../utils/constants";
+import { getWatchlistStatus, setWatchlistStatus } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
@@ -9,8 +10,13 @@ const PAGE_BG = {
   backgroundImage: "radial-gradient(50% 30% at 50% 0%, rgba(124,92,255,0.12), transparent 70%)",
 };
 
+function capture(event, props) {
+  try { window.posthog && window.posthog.capture && window.posthog.capture(event, props); } catch { /* ignore */ }
+}
+
 export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }) {
   const [details, setDetails] = useState(null);
+  const [saved, setSaved] = useState(false);
 
   const isWatched = watched?.some(
     (w) => w.id === movie?.id && w.media_type === (movie?.media_type || "movie")
@@ -18,9 +24,8 @@ export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }
 
   useEffect(() => {
     if (!movie) return;
-    getDetails(movie.id, movie.media_type || "movie")
-      .then(setDetails)
-      .catch(() => {});
+    setSaved(getWatchlistStatus(movie.id, movie.media_type) === "saved");
+    getDetails(movie.id, movie.media_type || "movie").then(setDetails).catch(() => {});
   }, [movie]);
 
   if (!movie) {
@@ -46,6 +51,13 @@ export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }
   const backdrop = details?.backdrop_path || movie.backdrop_path;
   const poster = details?.poster_path || movie.poster_path;
 
+  const toggleSave = () => {
+    const next = !saved;
+    setSaved(next);
+    setWatchlistStatus(movie, next ? "saved" : null);
+    if (next) capture("bridge_saved", { id: movie.id });
+  };
+
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
@@ -53,7 +65,6 @@ export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }
           ← Back to bridges
         </button>
 
-        {/* Hero */}
         <div className="rounded-2xl overflow-hidden mb-4 relative">
           {backdrop ? (
             <div className="relative">
@@ -132,6 +143,9 @@ export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }
           </Card>
         )}
 
+        <Button variant={saved ? "accent" : "ghost"} className="w-full mb-3" onClick={toggleSave}>
+          {saved ? "✓ Saved to watchlist" : "+ Save to watchlist"}
+        </Button>
         <div className="grid grid-cols-2 gap-3">
           <Button variant={isWatched ? "ghost" : "primary"} disabled={isWatched} onClick={() => !isWatched && onMarkWatched(movie)}>
             {isWatched ? "✓ Watched" : "Mark as watched"}

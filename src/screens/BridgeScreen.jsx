@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { GENRE_COLORS } from "../utils/constants";
 import { posterUrl } from "../services/tmdbApi";
 import { findBridgeCandidates, generateBridgeReasoning, getBridgeStrength } from "../services/bridgeEngine";
-import { getBridges, setBridges } from "../utils/storage";
+import { getBridges, setBridges, getWatchlist, setWatchlistStatus } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
@@ -12,16 +12,24 @@ const PAGE_BG = {
     "radial-gradient(55% 40% at 85% 0%, rgba(255,138,91,0.10), transparent 70%), radial-gradient(45% 40% at 0% 100%, rgba(124,92,255,0.12), transparent 70%)",
 };
 
+function capture(event, props) {
+  try { window.posthog && window.posthog.capture && window.posthog.capture(event, props); } catch { /* ignore */ }
+}
+
 export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail, onGoBack }) {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState("Finding candidates…");
   const [reasonings, setReasonings] = useState({});
   const [expanded, setExpanded] = useState(0);
+  const [statusMap, setStatusMap] = useState(() => {
+    const m = {};
+    Object.values(getWatchlist()).forEach((it) => { m[it.id] = it.status; });
+    return m;
+  });
 
   useEffect(() => {
     if (!blindSpot || !profile) return;
-
     const cached = getBridges(blindSpot.genre.id);
     if (cached) {
       setCandidates(cached.candidates);
@@ -29,7 +37,6 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
       setLoading(false);
       return;
     }
-
     setLoading(true);
     findBridgeCandidates(blindSpot.genre.id, profile, "US", (msg) => setLoadingMsg(msg))
       .then(async (results) => {
@@ -43,9 +50,7 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
               newReasonings[candidate.id] = reasoning;
               setReasonings((prev) => ({ ...prev, [candidate.id]: reasoning }));
             }
-          } catch {
-            /* fallback handled inside generateBridgeReasoning */
-          }
+          } catch { /* fallback handled inside */ }
           await new Promise((r) => setTimeout(r, 500));
         }
         setBridges(blindSpot.genre.id, { candidates: results, reasonings: newReasonings });
@@ -55,6 +60,18 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
         setLoading(false);
       });
   }, [blindSpot, profile, watched]);
+
+  const setStatus = (movie, status) => {
+    setWatchlistStatus(movie, status);
+    setStatusMap((prev) => {
+      const next = { ...prev };
+      if (!status) delete next[movie.id];
+      else next[movie.id] = status;
+      return next;
+    });
+    if (status === "saved") capture("bridge_saved", { id: movie.id });
+    if (status === "dismissed") capture("bridge_dismissed", { id: movie.id });
+  };
 
   if (!blindSpot) {
     return (
@@ -66,6 +83,8 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
       </div>
     );
   }
+
+  const visible = candidates.filter((m) => statusMap[m.id] !== "dismissed");
 
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
@@ -90,18 +109,22 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
           </div>
         )}
 
-        {!loading && candidates.length === 0 && (
+        {!loading && visible.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-ink-muted font-body mb-4">No Netflix titles found in this genre for your region.</p>
-            <Button variant="ghost" onClick={onGoBack}>Try another blind spot</Button>
+            <p className="text-ink-muted font-body mb-4">
+              {candidates.length ? "You've cleared these out. Try another blind spot." : "No Netflix titles found in this genre for your region."}
+            </p>
+            <Button variant="ghost" onClick={onGoBack}>Back to blind spots</Button>
           </div>
         )}
 
         {!loading &&
-          candidates.map((movie, i) => {
+          visible.map((movie) => {
+            const i = candidates.indexOf(movie);
             const reasoning = reasonings[movie.id];
             const strength = getBridgeStrength(movie.similarity || 0);
             const isExpanded = expanded === i;
+            const isSaved = statusMap[movie.id] === "saved";
             return (
               <Card key={movie.id} className={`mb-3 overflow-hidden ${isExpanded ? "border-primary" : ""}`}>
                 <div onClick={() => setExpanded(isExpanded ? -1 : i)} className="p-4 cursor-pointer flex gap-3">
@@ -113,6 +136,7 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
                   <div className="flex-1 min-w-0">
                     <p className="text-[15px] font-bold text-ink leading-tight">
                       {movie.title} <span className="text-ink-muted font-normal text-sm">({(movie.release_date || "").slice(0, 4)})</span>
+                      {isSaved && <span className="text-accent text-xs ml-1">• saved</span>}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       {(movie.genre_names || []).slice(0, 3).map((g) => (
@@ -156,7 +180,13 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
                       </div>
                     )}
 
-                    <Button variant="ghost" className="w-full mt-3" onClick={() => onViewDetail(movie)}>View details</Button>
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <Button variant={isSaved ? "accent" : "ghost"} onClick={() => setStatus(movie, isSaved ? null : "saved")}>
+                        {isSaved ? "✓ Saved" : "+ Save"}
+                      </Button>
+                      <Button variant="ghost" onClick={() => setStatus(movie, "dismissed")}>Not for me</Button>
+                    </div>
+                    <Button variant="ghost" className="w-full mt-2" onClick={() => onViewDetail(movie)}>View details</Button>
                   </div>
                 )}
               </Card>

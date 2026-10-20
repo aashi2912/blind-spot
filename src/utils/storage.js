@@ -106,3 +106,39 @@ export function setWatchedList(list) {
   set(KEYS.watched, list);
   return list;
 }
+
+// --- Watchlist (saved / dismissed bridge recs) ---
+const WATCHLIST_KEY = "blind-spot:watchlist";
+
+export function getWatchlist() {
+  return get(WATCHLIST_KEY) || {};
+}
+
+export function getWatchlistStatus(id, mediaType) {
+  const all = getWatchlist();
+  return all[id + ":" + (mediaType || "movie")]?.status || null;
+}
+
+export function setWatchlistStatus(item, status) {
+  const all = getWatchlist();
+  const key = item.id + ":" + (item.media_type || "movie");
+  if (!status) {
+    delete all[key];
+  } else {
+    all[key] = {
+      id: item.id,
+      media_type: item.media_type || "movie",
+      title: item.title,
+      poster_path: item.poster_path,
+      release_date: item.release_date || "",
+      status,
+      ts: Date.now(),
+    };
+  }
+  set(WATCHLIST_KEY, all);
+  return all;
+}
+
+export function getSaved() {
+  return Object.values(getWatchlist()).filter((x) => x.status === "saved").sort((a, b) => b.ts - a.ts);
+}
