@@ -10,6 +10,7 @@ import { getWatched, addWatched, removeWatched, updateWatchedKeywords, setProfil
 import { getKeywords } from "./services/tmdbApi";
 import { buildTasteProfile } from "./services/tasteProfiler";
 import { SAMPLE_WATCHED } from "./utils/sampleData";
+import { track, trackScreen } from "./analytics";
 
 const TOUR_KEY = "blind-spot:seen-tour";
 
@@ -27,6 +28,10 @@ export default function App() {
   useEffect(() => {
     setWatched(getWatched());
   }, []);
+
+  useEffect(() => {
+    trackScreen(screen);
+  }, [screen]);
 
   useEffect(() => {
     if (watched.length >= 3) {
@@ -83,6 +88,7 @@ export default function App() {
     }
     setWatchedList(merged);
     setWatched([...merged]);
+    track("csv_import_completed", { matched: titles.length });
     (async () => {
       const top = [...titles].sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0)).slice(0, 20);
       for (const t of top) {
@@ -97,6 +103,7 @@ export default function App() {
 
   // Sample mode — load a prebuilt history (in memory only) and jump to the Reveal.
   const handleSample = useCallback(() => {
+    track("sample_viewed");
     setWatched(SAMPLE_WATCHED);
     setSampleMode(true);
     setScreen("bubble");
