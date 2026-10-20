@@ -31,9 +31,9 @@ function Orbit() {
 }
 
 const STEPS = [
-  { n: "01", title: "Import your history", body: "Drop in your Netflix viewing export. It is parsed on your device, never uploaded." },
-  { n: "02", title: "See your bubble", body: "Your taste gets a shape and a score — the genres, eras, and languages you actually live in." },
-  { n: "03", title: "Find the way out", body: "One reasoned recommendation from a genre you avoid, tied to something you already love.", out: true },
+  { n: "01", title: "Add your history", body: "Upload your Netflix history file, or just try a sample. It's read on your device and never uploaded." },
+  { n: "02", title: "See your taste", body: "Get a clear picture of the genres, decades, and languages you watch most — plus a score for how much you stick to the same thing." },
+  { n: "03", title: "Find something new", body: "Get one great pick from a genre you usually skip, with a short reason you'll probably like it.", out: true },
 ];
 
 export default function LandingScreen({ onStart, onSample }) {
@@ -61,20 +61,20 @@ export default function LandingScreen({ onStart, onSample }) {
 
         <section className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center py-12 lg:py-16">
           <div>
-            <p className="text-primary-soft font-semibold mb-5">Your streaming taste, seen clearly</p>
-            <h1 className="font-brand font-bold tracking-tight leading-[1.02] text-4xl sm:text-5xl lg:text-[3.5rem]">
-              Every recommender keeps you in your bubble.
+            <p className="text-primary-soft font-semibold mb-5">Your Netflix taste, seen clearly</p>
+            <h1 className="font-brand font-bold tracking-tight leading-[1.03] text-4xl sm:text-5xl lg:text-[3.4rem]">
+              See the great shows your Netflix habits hide.
             </h1>
-            <p className="text-ink-muted text-lg mt-5 max-w-[32ch]">
-              Blind Spot shows you the shape of what you watch, the genres you have walled off, and one reasoned way out.
+            <p className="text-ink-muted text-lg mt-5 max-w-[34ch]">
+              Netflix keeps showing you more of what you already watch. Blind Spot reads your history, shows you the genres you're stuck in, and picks one great show from a genre you skip.
             </p>
             <div className="flex flex-wrap gap-3.5 mt-9">
-              <Button size="lg" onClick={onStart}>Reveal my bubble</Button>
-              <Button variant="ghost" size="lg" onClick={onSample}>See a sample</Button>
+              <Button size="lg" onClick={onStart}>See my taste</Button>
+              <Button variant="ghost" size="lg" onClick={onSample}>Try a sample</Button>
             </div>
             <p className="flex items-center gap-2 text-ink-muted text-sm mt-5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#3ddc97]" />
-              Import your Netflix history. Nothing leaves your browser.
+              Your history is read in your browser. Nothing is uploaded.
             </p>
           </div>
           <div className="flex justify-center lg:justify-end"><Orbit /></div>

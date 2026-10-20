@@ -19,6 +19,7 @@ export default function App() {
   const [profile, setProfileState] = useState(null);
   const [selectedBlindSpot, setSelectedBlindSpot] = useState(null);
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [sampleMode, setSampleMode] = useState(false);
   const [showTour, setShowTour] = useState(() => {
     try { return !localStorage.getItem(TOUR_KEY); } catch { return false; }
   });
@@ -39,6 +40,26 @@ export default function App() {
     try { localStorage.setItem(TOUR_KEY, "1"); } catch { /* ignore */ }
     setShowTour(false);
   }, []);
+
+  const nav = useCallback((s) => setScreen(s), []);
+
+  // Home: leave sample mode, restore the real saved history, show the landing.
+  const goHome = useCallback(() => {
+    setWatched(getWatched());
+    setSampleMode(false);
+    setSelectedBlindSpot(null);
+    setSelectedMovie(null);
+    setScreen("landing");
+  }, []);
+
+  // Go to the input screen; if leaving a sample, restore the real history first.
+  const goInput = useCallback(() => {
+    if (sampleMode) {
+      setWatched(getWatched());
+      setSampleMode(false);
+    }
+    setScreen("input");
+  }, [sampleMode]);
 
   const handleAddTitle = useCallback(async (title) => {
     const updated = addWatched(title);
@@ -77,14 +98,13 @@ export default function App() {
   // Sample mode — load a prebuilt history (in memory only) and jump to the Reveal.
   const handleSample = useCallback(() => {
     setWatched(SAMPLE_WATCHED);
+    setSampleMode(true);
     setScreen("bubble");
   }, []);
 
   const handleRemoveTitle = useCallback((id, mediaType) => {
     setWatched([...removeWatched(id, mediaType)]);
   }, []);
-
-  const nav = useCallback((s) => setScreen(s), []);
 
   const handleExploreBlindSpot = useCallback((blindSpot) => {
     setSelectedBlindSpot(blindSpot);
@@ -124,17 +144,51 @@ export default function App() {
             onRemove={handleRemoveTitle}
             onAnalyze={() => nav("bubble")}
             onImportMany={handleBulkImport}
+            onHome={goHome}
             profile={profile}
           />
         );
       case "bubble":
-        return <BubbleScreen profile={profile} watched={watched} onViewBlindSpots={() => nav("blindspots")} onGoBack={() => nav("input")} />;
+        return (
+          <BubbleScreen
+            profile={profile}
+            watched={watched}
+            sampleMode={sampleMode}
+            onViewBlindSpots={() => nav("blindspots")}
+            onAddMore={goInput}
+            onHome={goHome}
+          />
+        );
       case "blindspots":
-        return <BlindSpotsScreen profile={profile} onExplore={handleExploreBlindSpot} onGoBack={() => nav("bubble")} />;
+        return (
+          <BlindSpotsScreen
+            profile={profile}
+            onExplore={handleExploreBlindSpot}
+            onGoBack={() => nav("bubble")}
+            onHome={goHome}
+          />
+        );
       case "bridges":
-        return <BridgeScreen profile={profile} watched={watched} blindSpot={selectedBlindSpot} onViewDetail={handleViewDetail} onGoBack={() => nav("blindspots")} />;
+        return (
+          <BridgeScreen
+            profile={profile}
+            watched={watched}
+            blindSpot={selectedBlindSpot}
+            onViewDetail={handleViewDetail}
+            onGoBack={() => nav("blindspots")}
+            onHome={goHome}
+          />
+        );
       case "detail":
-        return <DetailScreen movie={selectedMovie} watched={watched} onMarkWatched={handleMarkWatched} onGoBack={() => nav("bridges")} />;
+        return (
+          <DetailScreen
+            movie={selectedMovie}
+            watched={watched}
+            onMarkWatched={handleMarkWatched}
+            onGoBack={() => nav("bridges")}
+            onHome={goHome}
+          />
+        );
       default:
         return <LandingScreen onStart={() => nav("input")} onSample={handleSample} />;
     }

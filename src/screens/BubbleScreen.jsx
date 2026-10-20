@@ -8,22 +8,23 @@ import { getSaved } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
+import TopBar from "../components/TopBar";
 
 const PAGE_BG = {
   backgroundImage:
     "radial-gradient(60% 45% at 80% 0%, rgba(124,92,255,0.16), transparent 70%), radial-gradient(40% 35% at 5% 100%, rgba(255,138,91,0.07), transparent 70%)",
 };
 
-const PART_LABELS = { genre: "Genre focus", breadth: "Few genres", language: "One language", decade: "One era" };
+const PART_LABELS = { genre: "Same few genres", breadth: "Most genres ignored", language: "Mostly one language", decade: "Mostly one era" };
 
 const SHARE_LABEL = {
-  working: "Generating…",
+  working: "Creating image…",
   shared: "Shared ✓",
   downloaded: "Image saved + link copied ✓",
   error: "Couldn't share — try again",
 };
 
-export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoBack }) {
+export default function BubbleScreen({ profile, watched, sampleMode, onViewBlindSpots, onAddMore, onHome }) {
   const [summary, setSummary] = useState(() => (profile ? templateSummary(profile) : ""));
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [shareStatus, setShareStatus] = useState(null);
@@ -41,8 +42,8 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
     return (
       <div className="min-h-screen bg-void text-ink grid place-items-center px-6" style={PAGE_BG}>
         <div className="text-center">
-          <p className="text-ink-muted font-body mb-4">Add a few titles to see your bubble.</p>
-          <Button variant="ghost" onClick={onGoBack}>Back to titles</Button>
+          <p className="text-ink-muted font-body mb-4">Add a few titles to see your taste.</p>
+          <Button variant="ghost" onClick={onAddMore}>Add titles</Button>
         </div>
       </div>
     );
@@ -68,17 +69,14 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2 font-bold">
-            <svg viewBox="0 0 26 26" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle cx="13" cy="13" r="11.5" stroke="#7C5CFF" strokeWidth="1.5" opacity="0.5" fill="none" />
-              <circle cx="10.5" cy="11" r="2.4" fill="#7C5CFF" />
-              <circle cx="20" cy="19.5" r="2" fill="#FF8A5B" />
-            </svg>
-            Blind Spot
+        <TopBar onHome={onHome} onBack={onHome} backLabel="Home" />
+
+        {sampleMode && (
+          <div className="bg-primary/10 border border-primary/30 rounded-xl px-4 py-2.5 mb-5 text-xs font-body flex items-center justify-between gap-3">
+            <span className="text-primary-soft">You're viewing a sample profile.</span>
+            <button onClick={onAddMore} className="text-ink underline underline-offset-2 whitespace-nowrap">Use my own history →</button>
           </div>
-          <button onClick={onGoBack} className="text-sm text-ink-muted hover:text-ink font-body transition-colors">Start over</button>
-        </div>
+        )}
 
         <div className="text-center animate-score mb-3">
           <p className="text-ink-muted font-body text-sm mb-2">Your Bubble Score</p>
@@ -92,17 +90,17 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
 
         <div className="flex flex-col items-center gap-2 mb-10">
           <Button variant="accent" onClick={handleShare} disabled={shareStatus === "working"}>
-            {SHARE_LABEL[shareStatus] || "Share my bubble"}
+            {SHARE_LABEL[shareStatus] || "Share my result"}
           </Button>
           <button onClick={() => setShowBreakdown((v) => !v)} className="text-xs text-primary-soft hover:text-primary font-body underline underline-offset-2">
-            {showBreakdown ? "Hide" : "How is this scored?"}
+            {showBreakdown ? "Hide" : "What does this score mean?"}
           </button>
           {showBreakdown && (
             <Card className="p-4 mt-1 text-left w-full">
-              <p className="text-xs text-ink-muted font-body mb-3">Higher means a tighter bubble. It blends four signals from your history:</p>
+              <p className="text-xs text-ink-muted font-body mb-3">A higher score means you stick to a narrower set of shows. It blends four things from your history:</p>
               {Object.entries(parts).map(([k, v]) => (
                 <div key={k} className="flex items-center gap-3 mb-2">
-                  <span className="text-xs text-ink w-24 font-body">{PART_LABELS[k]}</span>
+                  <span className="text-xs text-ink w-36 font-body">{PART_LABELS[k]}</span>
                   <div className="flex-1 h-1.5 bg-line rounded-full overflow-hidden">
                     <div className="h-full bg-primary rounded-full" style={{ width: Math.round(v * 100) + "%" }} />
                   </div>
@@ -173,7 +171,7 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
 
         {keywordVector.length > 0 && (
           <Card className="p-5 mb-5">
-            <p className="text-sm font-bold font-body mb-3">Your recurring themes</p>
+            <p className="text-sm font-bold font-body mb-3">Themes you keep coming back to</p>
             <div className="flex flex-wrap gap-1.5">
               {keywordVector.slice(0, 15).map((kw, i) => (
                 <Chip key={kw.name} tone={i < 3 ? "primary" : "neutral"}>{kw.name}</Chip>
@@ -183,7 +181,7 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
         )}
 
         {saved.length > 0 && (
-          <Card className="p-5 mb-6 border-accent/30">
+          <Card className="p-5 mb-5 border-accent/30">
             <p className="text-sm font-bold font-body mb-3">Your watchlist · {saved.length}</p>
             <div className="flex flex-col gap-2">
               {saved.slice(0, 6).map((s) => (
@@ -197,8 +195,10 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
           </Card>
         )}
 
-        <Button className="w-full mb-3" size="lg" onClick={onViewBlindSpots}>See my blind spots</Button>
-        <Button className="w-full" variant="ghost" onClick={onGoBack}>Add more titles</Button>
+        <Button className="w-full mb-3" size="lg" onClick={onViewBlindSpots}>Show me what I'm missing</Button>
+        <Button className="w-full" variant="ghost" onClick={onAddMore}>
+          {sampleMode ? "Use my own history" : "Add more titles"}
+        </Button>
       </div>
     </div>
   );

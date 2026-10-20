@@ -3,20 +3,20 @@ import Button from "./ui/Button";
 
 const STEPS = [
   {
-    title: "Netflix keeps you in a bubble",
-    body: "Its recommendations mostly feed you more of what you already like. Blind Spot shows you the shape of that bubble — and one way out.",
+    title: "Welcome to Blind Spot",
+    body: "Netflix mostly shows you more of what you already watch. This tool shows you what that does to your taste — and how to break out of it.",
   },
   {
-    title: "1 · Import your history",
-    body: "Drop in your Netflix export, or try a sample. It is read in your browser and never uploaded.",
+    title: "Add your Netflix history",
+    body: "Upload your history file, or just try a sample. It's read right here in your browser and never uploaded anywhere.",
   },
   {
-    title: "2 · See your bubble",
-    body: "Your taste gets a shape and a 0–100 Bubble Score — the genres, eras, and languages you actually live in.",
+    title: "See your taste, clearly",
+    body: "You get a simple picture of what you watch, plus a score for how much you stick to the same kinds of shows.",
   },
   {
-    title: "3 · Find the way out",
-    body: "One reasoned recommendation from a genre you avoid, tied to something you already love.",
+    title: "Find something new",
+    body: "We suggest one great show from a genre you usually skip — and explain why you'll probably like it.",
   },
 ];
 

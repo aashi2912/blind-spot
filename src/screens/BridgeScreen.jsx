@@ -6,6 +6,7 @@ import { getBridges, setBridges, getWatchlist, setWatchlistStatus } from "../uti
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
+import TopBar from "../components/TopBar";
 
 const PAGE_BG = {
   backgroundImage:
@@ -16,10 +17,10 @@ function capture(event, props) {
   try { window.posthog && window.posthog.capture && window.posthog.capture(event, props); } catch { /* ignore */ }
 }
 
-export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail, onGoBack }) {
+export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail, onGoBack, onHome }) {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMsg, setLoadingMsg] = useState("Finding candidates…");
+  const [loadingMsg, setLoadingMsg] = useState("Finding picks…");
   const [reasonings, setReasonings] = useState({});
   const [expanded, setExpanded] = useState(0);
   const [statusMap, setStatusMap] = useState(() => {
@@ -77,8 +78,8 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
     return (
       <div className="min-h-screen bg-void text-ink grid place-items-center px-6" style={PAGE_BG}>
         <div className="text-center">
-          <p className="text-ink-muted font-body mb-4">Pick a blind spot to explore.</p>
-          <Button variant="ghost" onClick={onGoBack}>Back to blind spots</Button>
+          <p className="text-ink-muted font-body mb-4">Pick a genre to explore.</p>
+          <Button variant="ghost" onClick={onGoBack}>Back</Button>
         </div>
       </div>
     );
@@ -89,14 +90,12 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <button onClick={onGoBack} className="text-sm text-ink-muted hover:text-ink font-body transition-colors mb-6">
-          ← Back to blind spots
-        </button>
+        <TopBar onHome={onHome} onBack={onGoBack} backLabel="Blind spots" />
 
         <h1 className="font-brand text-3xl font-bold mb-2">
           Bridges to <span style={{ color: GENRE_COLORS[blindSpot.genre.id] || "#7C5CFF" }}>{blindSpot.genre.name}</span>
         </h1>
-        <p className="text-ink-muted font-body mb-6">Films that connect what you already love to a genre you avoid.</p>
+        <p className="text-ink-muted font-body mb-6">Each pick shares themes with shows you already watch — an easy way in.</p>
 
         {loading && (
           <div className="text-center py-12">
@@ -112,7 +111,7 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
         {!loading && visible.length === 0 && (
           <div className="text-center py-12">
             <p className="text-ink-muted font-body mb-4">
-              {candidates.length ? "You've cleared these out. Try another blind spot." : "No Netflix titles found in this genre for your region."}
+              {candidates.length ? "You've cleared these out. Try another genre." : "No Netflix titles found in this genre for your region."}
             </p>
             <Button variant="ghost" onClick={onGoBack}>Back to blind spots</Button>
           </div>
@@ -156,7 +155,7 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-line">
                     <div className="bg-void rounded-xl p-3.5 mt-3">
-                      <p className="text-[10px] font-bold text-primary-soft uppercase tracking-wider mb-1.5 font-body">Why this is your bridge</p>
+                      <p className="text-[10px] font-bold text-primary-soft uppercase tracking-wider mb-1.5 font-body">Why you'll probably like it</p>
                       {reasoning ? (
                         <p className="text-[13px] text-ink/90 leading-relaxed font-body">{reasoning}</p>
                       ) : (
@@ -166,7 +165,7 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
                             <span className="w-1.5 h-1.5 rounded-full bg-primary loading-dot" />
                             <span className="w-1.5 h-1.5 rounded-full bg-primary loading-dot" />
                           </div>
-                          <span className="text-xs text-ink-muted font-body">Generating reasoning…</span>
+                          <span className="text-xs text-ink-muted font-body">Writing the reason…</span>
                         </div>
                       )}
                     </div>
@@ -186,7 +185,7 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
                       </Button>
                       <Button variant="ghost" onClick={() => setStatus(movie, "dismissed")}>Not for me</Button>
                     </div>
-                    <Button variant="ghost" className="w-full mt-2" onClick={() => onViewDetail(movie)}>View details</Button>
+                    <Button variant="ghost" className="w-full mt-2" onClick={() => onViewDetail(movie)}>See details</Button>
                   </div>
                 )}
               </Card>

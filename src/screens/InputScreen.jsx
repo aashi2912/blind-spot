@@ -6,13 +6,14 @@ import { enrichTitles } from "../services/enrichTitles";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
+import TopBar from "../components/TopBar";
 
 const PAGE_BG = {
   backgroundImage:
     "radial-gradient(55% 40% at 85% 0%, rgba(124,92,255,0.14), transparent 70%), radial-gradient(45% 40% at 0% 100%, rgba(255,138,91,0.06), transparent 70%)",
 };
 
-export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImportMany, profile }) {
+export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImportMany, onHome, profile }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -54,7 +55,7 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
       const text = await file.text();
       const { titles } = parseNetflixCsv(text);
       if (!titles.length) {
-        setImportError("Could not find titles in that file. Make sure it is your Netflix viewing-activity CSV.");
+        setImportError("We couldn't find any titles in that file. Make sure it's your Netflix viewing-activity CSV.");
         return;
       }
       setImporting(true);
@@ -62,9 +63,9 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
       const enriched = await enrichTitles(titles, { concurrency: 5, onProgress: (p) => setImportProgress(p) });
       onImportMany?.(enriched);
       setImportedCount(enriched.length);
-      if (!enriched.length) setImportError("Read your file, but couldn't match any titles. Check your connection and try again.");
+      if (!enriched.length) setImportError("We read your file but couldn't match any titles. Check your connection and try again.");
     } catch {
-      setImportError("Something went wrong reading that file. Try re-downloading it from Netflix.");
+      setImportError("Something went wrong reading that file. Try downloading it from Netflix again.");
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -85,35 +86,26 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-8 font-bold">
-          <svg viewBox="0 0 26 26" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <circle cx="13" cy="13" r="11.5" stroke="#7C5CFF" strokeWidth="1.5" opacity="0.5" fill="none" />
-            <circle cx="10.5" cy="11" r="2.4" fill="#7C5CFF" />
-            <circle cx="20" cy="19.5" r="2" fill="#FF8A5B" />
-          </svg>
-          Blind Spot
-        </div>
+        <TopBar onHome={onHome} onBack={onHome} backLabel="Home" />
 
         <h1 className="font-brand text-3xl font-bold mb-2">What have you been watching?</h1>
-        <p className="text-ink-muted font-body mb-6">Import your Netflix history, or search and add titles.</p>
+        <p className="text-ink-muted font-body mb-6">Upload your Netflix history for the full picture, or add a few titles by hand.</p>
 
-        {/* Import */}
         <Card className="p-5 mb-4">
-          <h3 className="text-base font-bold font-body mb-1">Import your Netflix history</h3>
-          <p className="text-xs text-ink-muted font-body mb-3">One file, everything at once. Read in your browser, never uploaded.</p>
+          <h3 className="text-base font-bold font-body mb-1">Upload your Netflix history</h3>
+          <p className="text-xs text-ink-muted font-body mb-3">One file, all your titles at once. It's read in your browser and never uploaded.</p>
           {!importing && (
             <>
               <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFile} />
               <Button className="w-full" onClick={() => fileRef.current && fileRef.current.click()}>Choose your Netflix file</Button>
               <button onClick={() => setShowHelp((v) => !v)} className="mt-2 text-xs text-ink-muted hover:text-ink font-body underline underline-offset-2">
-                How do I get this file?
+                Where do I get this file?
               </button>
               {showHelp && (
                 <ol className="mt-2 text-xs text-ink-muted font-body list-decimal pl-4 space-y-1">
-                  <li>Go to netflix.com/viewingactivity (on the profile you want).</li>
+                  <li>On a computer, go to netflix.com/viewingactivity (pick the profile you want).</li>
                   <li>Scroll to the bottom and click "Download all".</li>
-                  <li>Upload the NetflixViewingHistory.csv file here.</li>
+                  <li>Come back here and upload the NetflixViewingHistory.csv file.</li>
                 </ol>
               )}
             </>
@@ -126,26 +118,24 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
                 </div>
                 <span className="text-xs text-ink-muted font-body whitespace-nowrap">{importProgress.done}/{importProgress.total}</span>
               </div>
-              <p className="text-xs text-ink-muted font-body mt-2">Matching your titles… {importProgress.matched} found</p>
+              <p className="text-xs text-ink-muted font-body mt-2">Looking up your titles… {importProgress.matched} found so far</p>
             </div>
           )}
           {importError && <p className="text-xs text-accent font-body mt-2">{importError}</p>}
-          {importedCount > 0 && !importing && <p className="text-xs text-[#3ddc97] font-body mt-2">✓ Imported {importedCount} titles from your history.</p>}
+          {importedCount > 0 && !importing && <p className="text-xs text-[#3ddc97] font-body mt-2">✓ Added {importedCount} titles from your history.</p>}
         </Card>
 
-        {/* Divider */}
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-line" />
-          <span className="text-[10px] text-ink-muted font-body uppercase tracking-wider">or add manually</span>
+          <span className="text-[10px] text-ink-muted font-body uppercase tracking-wider">or add by hand</span>
           <div className="flex-1 h-px bg-line" />
         </div>
 
-        {/* Search */}
         <div className="relative mb-4">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search movies and TV shows…"
+            placeholder="Search for a movie or show…"
             className="w-full py-3.5 px-10 rounded-xl border border-line bg-surface text-ink text-sm font-body outline-none focus:border-primary/60 transition-colors"
           />
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base opacity-40">🔍</span>
@@ -184,7 +174,6 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
           )}
         </div>
 
-        {/* Progress */}
         {watched.length > 0 && watched.length < GOOD_TITLES && (
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-1 bg-line rounded-full overflow-hidden">
@@ -196,14 +185,13 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
 
         {watched.length >= MIN_TITLES && (
           <div className="bg-[#3ddc97]/10 border border-[#3ddc97]/20 rounded-xl px-4 py-2.5 mb-4 text-xs text-[#3ddc97] font-body">
-            {watched.length >= GOOD_TITLES ? "✓ Great profile. Ready for deep analysis." : "✓ Enough for a basic read. Add more for deeper insight."}
+            {watched.length >= GOOD_TITLES ? "✓ Nice, that's plenty. Ready when you are." : "✓ Enough for a basic read. Add more for a sharper picture."}
           </div>
         )}
 
-        {/* Taste so far */}
         {topGenres.length > 0 && (
           <div className="mb-5">
-            <p className="text-xs font-bold text-ink-muted mb-2 font-body">Your taste so far</p>
+            <p className="text-xs font-bold text-ink-muted mb-2 font-body">What you've added so far</p>
             <div className="flex flex-wrap gap-1.5 items-center">
               {topGenres.map(([name, count]) => {
                 const genre = Object.values(GENRE_MAP).find((g) => g.name === name);
@@ -219,7 +207,6 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
           </div>
         )}
 
-        {/* Watched list */}
         {watched.length > 0 && (
           <div className="mb-5">
             <p className="text-xs font-bold text-ink-muted mb-2 font-body">{watched.length} title{watched.length !== 1 ? "s" : ""} added</p>
@@ -235,22 +222,20 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
                     <p className="text-xs font-semibold text-ink leading-tight">{t.title}</p>
                     <p className="text-[10px] text-ink-muted">{(t.release_date || "").slice(0, 4)}</p>
                   </div>
-                  <button onClick={() => onRemove(t.id, t.media_type)} className="text-ink-muted hover:text-accent text-sm ml-1 transition-colors">×</button>
+                  <button onClick={() => onRemove(t.id, t.media_type)} className="text-ink-muted hover:text-accent text-sm ml-1 transition-colors" aria-label="Remove">×</button>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Analyze */}
         {watched.length >= MIN_TITLES && (
-          <Button className="w-full" size="lg" onClick={onAnalyze}>Reveal my bubble</Button>
+          <Button className="w-full" size="lg" onClick={onAnalyze}>See my taste</Button>
         )}
 
-        {/* Trending */}
         {trending.length > 0 && (
           <div className="mt-6">
-            <p className="text-xs font-bold text-ink-muted mb-2 font-body">Quick add — trending on Netflix</p>
+            <p className="text-xs font-bold text-ink-muted mb-2 font-body">Popular right now — tap to add</p>
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
               {trending.filter((t) => !watchedIds.has(t.id + ":movie")).slice(0, 8).map((t) => (
                 <div

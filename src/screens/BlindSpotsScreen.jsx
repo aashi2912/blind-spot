@@ -9,13 +9,14 @@ import {
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
+import TopBar from "../components/TopBar";
 
 const PAGE_BG = {
   backgroundImage:
     "radial-gradient(55% 40% at 85% 0%, rgba(255,138,91,0.10), transparent 70%), radial-gradient(45% 40% at 0% 100%, rgba(124,92,255,0.12), transparent 70%)",
 };
 
-export default function BlindSpotsScreen({ profile, onExplore, onGoBack }) {
+export default function BlindSpotsScreen({ profile, onExplore, onGoBack, onHome }) {
   const [blindSpots, setBlindSpots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -43,7 +44,7 @@ export default function BlindSpotsScreen({ profile, onExplore, onGoBack }) {
     return (
       <div className="min-h-screen bg-void text-ink grid place-items-center px-6" style={PAGE_BG}>
         <div className="text-center">
-          <p className="text-ink-muted font-body mb-4">Analyze your taste first.</p>
+          <p className="text-ink-muted font-body mb-4">See your taste first.</p>
           <Button variant="ghost" onClick={onGoBack}>Go back</Button>
         </div>
       </div>
@@ -55,21 +56,19 @@ export default function BlindSpotsScreen({ profile, onExplore, onGoBack }) {
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <button onClick={onGoBack} className="text-sm text-ink-muted hover:text-ink font-body transition-colors mb-6">
-          ← Back to your bubble
-        </button>
+        <TopBar onHome={onHome} onBack={onGoBack} backLabel="Your taste" />
 
         <h1 className="font-brand text-3xl font-bold mb-2">Your blind spots</h1>
-        <p className="text-ink-muted font-body mb-1">Genres you have never explored, ranked by what is worth your time.</p>
+        <p className="text-ink-muted font-body mb-1">Genres you almost never watch, ranked by what's most worth a try.</p>
         {!loading && (
           <p className="text-accent font-body text-sm font-semibold mb-6">
-            {live.length} unexplored {live.length === 1 ? "genre" : "genres"} with strong Netflix picks
+            {live.length} unexplored {live.length === 1 ? "genre" : "genres"} with strong picks on Netflix
           </p>
         )}
 
         {(langGaps?.isConcentrated || decadeGaps.length > 0) && (
           <div className="mb-6">
-            <p className="text-xs font-bold text-ink-muted mb-2 font-body">Also missing from your taste</p>
+            <p className="text-xs font-bold text-ink-muted mb-2 font-body">You also rarely watch</p>
             <div className="flex flex-wrap gap-2">
               {langGaps?.missingLanguages?.slice(0, 4).map((l) => (
                 <Chip key={l.code} tone="accent">{l.name} cinema</Chip>
@@ -89,7 +88,7 @@ export default function BlindSpotsScreen({ profile, onExplore, onGoBack }) {
               <span className="w-2 h-2 rounded-full bg-primary loading-dot" />
             </div>
             <p className="text-sm text-ink-muted font-body">
-              Scanning the Netflix library… {progress.done}/{progress.total}
+              Checking what's on Netflix… {progress.done}/{progress.total}
             </p>
           </div>
         )}
@@ -114,11 +113,11 @@ export default function BlindSpotsScreen({ profile, onExplore, onGoBack }) {
                     <span className="text-xs text-ink-muted font-body">{bs.netflixCount} on Netflix</span>
                     <span className="text-xs text-ink-muted font-body">• avg {bs.avgRating}/10</span>
                   </div>
-                  <p className="text-xs text-ink-muted font-body">Tap to see your bridge in →</p>
+                  <p className="text-xs text-ink-muted font-body">Tap to see a pick that fits your taste →</p>
                 </div>
                 <div className="text-center ml-3 shrink-0">
                   <div className="text-2xl font-brand font-bold" style={{ color: oppColor }}>{bs.opportunity}</div>
-                  <div className="text-[8px] text-ink-muted uppercase font-body tracking-wide">opportunity</div>
+                  <div className="text-[8px] text-ink-muted uppercase font-body tracking-wide">worth a try</div>
                 </div>
               </Card>
             );

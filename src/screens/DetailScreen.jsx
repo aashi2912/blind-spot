@@ -5,6 +5,7 @@ import { getWatchlistStatus, setWatchlistStatus } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
+import TopBar from "../components/TopBar";
 
 const PAGE_BG = {
   backgroundImage: "radial-gradient(50% 30% at 50% 0%, rgba(124,92,255,0.12), transparent 70%)",
@@ -14,7 +15,7 @@ function capture(event, props) {
   try { window.posthog && window.posthog.capture && window.posthog.capture(event, props); } catch { /* ignore */ }
 }
 
-export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }) {
+export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack, onHome }) {
   const [details, setDetails] = useState(null);
   const [saved, setSaved] = useState(false);
 
@@ -61,9 +62,7 @@ export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <button onClick={onGoBack} className="text-sm text-ink-muted hover:text-ink font-body transition-colors mb-4">
-          ← Back to bridges
-        </button>
+        <TopBar onHome={onHome} onBack={onGoBack} backLabel="Picks" />
 
         <div className="rounded-2xl overflow-hidden mb-4 relative">
           {backdrop ? (
@@ -106,7 +105,7 @@ export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }
 
         {overview && (
           <Card className="p-4 mb-3">
-            <p className="text-xs font-bold text-ink-muted mb-1.5 font-body">Synopsis</p>
+            <p className="text-xs font-bold text-ink-muted mb-1.5 font-body">What it's about</p>
             <p className="text-sm text-ink/90 leading-relaxed font-body">{overview}</p>
           </Card>
         )}
@@ -138,7 +137,7 @@ export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }
 
         {movie.bridgeReasoning && (
           <Card className="p-4 mb-4 border-primary/30">
-            <p className="text-xs font-bold text-primary-soft mb-1.5 font-body">Why this is your bridge</p>
+            <p className="text-xs font-bold text-primary-soft mb-1.5 font-body">Why it fits your taste</p>
             <p className="text-sm text-ink/90 leading-relaxed font-body">{movie.bridgeReasoning}</p>
           </Card>
         )}
@@ -148,7 +147,7 @@ export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack }
         </Button>
         <div className="grid grid-cols-2 gap-3">
           <Button variant={isWatched ? "ghost" : "primary"} disabled={isWatched} onClick={() => !isWatched && onMarkWatched(movie)}>
-            {isWatched ? "✓ Watched" : "Mark as watched"}
+            {isWatched ? "✓ Watched" : "I've seen this"}
           </Button>
           <Button variant="ghost" onClick={() => window.open("https://www.netflix.com/search?q=" + encodeURIComponent(title), "_blank")}>
             Find on Netflix
