@@ -66,6 +66,12 @@ export default function App() {
     setScreen("input");
   }, [sampleMode]);
 
+  // Jump to any main stage from the nav bar. "Titles" exits sample mode.
+  const navigate = useCallback((target) => {
+    if (target === "input") { goInput(); return; }
+    setScreen(target);
+  }, [goInput]);
+
   const handleAddTitle = useCallback(async (title) => {
     const updated = addWatched(title);
     setWatched([...updated]);
@@ -141,6 +147,8 @@ export default function App() {
     setScreen("bubble");
   }, []);
 
+  const ready = !!profile;
+
   const renderScreen = () => {
     switch (screen) {
       case "input":
@@ -152,6 +160,8 @@ export default function App() {
             onAnalyze={() => nav("bubble")}
             onImportMany={handleBulkImport}
             onHome={goHome}
+            onGo={navigate}
+            ready={ready}
             profile={profile}
           />
         );
@@ -164,6 +174,8 @@ export default function App() {
             onViewBlindSpots={() => nav("blindspots")}
             onAddMore={goInput}
             onHome={goHome}
+            onGo={navigate}
+            ready={ready}
           />
         );
       case "blindspots":
@@ -173,6 +185,8 @@ export default function App() {
             onExplore={handleExploreBlindSpot}
             onGoBack={() => nav("bubble")}
             onHome={goHome}
+            onGo={navigate}
+            ready={ready}
           />
         );
       case "bridges":
@@ -184,6 +198,8 @@ export default function App() {
             onViewDetail={handleViewDetail}
             onGoBack={() => nav("blindspots")}
             onHome={goHome}
+            onGo={navigate}
+            ready={ready}
           />
         );
       case "detail":
@@ -194,6 +210,8 @@ export default function App() {
             onMarkWatched={handleMarkWatched}
             onGoBack={() => nav("bridges")}
             onHome={goHome}
+            onGo={navigate}
+            ready={ready}
           />
         );
       default:

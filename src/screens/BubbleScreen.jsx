@@ -8,7 +8,7 @@ import { getSaved } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
-import TopBar from "../components/TopBar";
+import NavBar from "../components/NavBar";
 
 const PAGE_BG = {
   backgroundImage:
@@ -24,7 +24,7 @@ const SHARE_LABEL = {
   error: "Couldn't share — try again",
 };
 
-export default function BubbleScreen({ profile, watched, sampleMode, onViewBlindSpots, onAddMore, onHome }) {
+export default function BubbleScreen({ profile, watched, sampleMode, onViewBlindSpots, onAddMore, onHome, onGo, ready }) {
   const [summary, setSummary] = useState(() => (profile ? templateSummary(profile) : ""));
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [shareStatus, setShareStatus] = useState(null);
@@ -69,7 +69,7 @@ export default function BubbleScreen({ profile, watched, sampleMode, onViewBlind
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <TopBar onHome={onHome} onBack={onHome} backLabel="Home" />
+        <NavBar active="bubble" ready={ready} onGo={onGo} onHome={onHome} />
 
         {sampleMode && (
           <div className="bg-primary/10 border border-primary/30 rounded-xl px-4 py-2.5 mb-5 text-xs font-body flex items-center justify-between gap-3">

@@ -5,7 +5,7 @@ import { getWatchlistStatus, setWatchlistStatus } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
-import TopBar from "../components/TopBar";
+import NavBar from "../components/NavBar";
 
 const PAGE_BG = {
   backgroundImage: "radial-gradient(50% 30% at 50% 0%, rgba(124,92,255,0.12), transparent 70%)",
@@ -15,7 +15,7 @@ function capture(event, props) {
   try { window.posthog && window.posthog.capture && window.posthog.capture(event, props); } catch { /* ignore */ }
 }
 
-export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack, onHome }) {
+export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack, onHome, onGo, ready }) {
   const [details, setDetails] = useState(null);
   const [saved, setSaved] = useState(false);
 
@@ -62,7 +62,7 @@ export default function DetailScreen({ movie, watched, onMarkWatched, onGoBack, 
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <TopBar onHome={onHome} onBack={onGoBack} backLabel="Picks" />
+        <NavBar active="blindspots" ready={ready} onGo={onGo} onHome={onHome} onBack={onGoBack} backLabel="Bridges" />
 
         <div className="rounded-2xl overflow-hidden mb-4 relative">
           {backdrop ? (

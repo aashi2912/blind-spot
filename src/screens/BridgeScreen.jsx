@@ -6,7 +6,7 @@ import { getBridges, setBridges, getWatchlist, setWatchlistStatus } from "../uti
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
-import TopBar from "../components/TopBar";
+import NavBar from "../components/NavBar";
 
 const PAGE_BG = {
   backgroundImage:
@@ -17,7 +17,7 @@ function capture(event, props) {
   try { window.posthog && window.posthog.capture && window.posthog.capture(event, props); } catch { /* ignore */ }
 }
 
-export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail, onGoBack, onHome }) {
+export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail, onGoBack, onHome, onGo, ready }) {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState("Finding picks…");
@@ -90,7 +90,7 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <TopBar onHome={onHome} onBack={onGoBack} backLabel="Blind spots" />
+        <NavBar active="blindspots" ready={ready} onGo={onGo} onHome={onHome} onBack={onGoBack} backLabel="Blind spots" />
 
         <h1 className="font-brand text-3xl font-bold mb-2">
           Bridges to <span style={{ color: GENRE_COLORS[blindSpot.genre.id] || "#7C5CFF" }}>{blindSpot.genre.name}</span>

@@ -6,14 +6,14 @@ import { enrichTitles } from "../services/enrichTitles";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
-import TopBar from "../components/TopBar";
+import NavBar from "../components/NavBar";
 
 const PAGE_BG = {
   backgroundImage:
     "radial-gradient(55% 40% at 85% 0%, rgba(124,92,255,0.14), transparent 70%), radial-gradient(45% 40% at 0% 100%, rgba(255,138,91,0.06), transparent 70%)",
 };
 
-export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImportMany, onHome, profile }) {
+export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImportMany, onHome, onGo, ready, profile }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -86,7 +86,7 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <TopBar onHome={onHome} onBack={onHome} backLabel="Home" />
+        <NavBar active="input" ready={ready} onGo={onGo} onHome={onHome} />
 
         <h1 className="font-brand text-3xl font-bold mb-2">What have you been watching?</h1>
         <p className="text-ink-muted font-body mb-6">Upload your Netflix history for the full picture, or add a few titles by hand.</p>

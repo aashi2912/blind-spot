@@ -9,14 +9,14 @@ import {
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
-import TopBar from "../components/TopBar";
+import NavBar from "../components/NavBar";
 
 const PAGE_BG = {
   backgroundImage:
     "radial-gradient(55% 40% at 85% 0%, rgba(255,138,91,0.10), transparent 70%), radial-gradient(45% 40% at 0% 100%, rgba(124,92,255,0.12), transparent 70%)",
 };
 
-export default function BlindSpotsScreen({ profile, onExplore, onGoBack, onHome }) {
+export default function BlindSpotsScreen({ profile, onExplore, onGoBack, onHome, onGo, ready }) {
   const [blindSpots, setBlindSpots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -56,7 +56,7 @@ export default function BlindSpotsScreen({ profile, onExplore, onGoBack, onHome 
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <TopBar onHome={onHome} onBack={onGoBack} backLabel="Your taste" />
+        <NavBar active="blindspots" ready={ready} onGo={onGo} onHome={onHome} />
 
         <h1 className="font-brand text-3xl font-bold mb-2">Your blind spots</h1>
         <p className="text-ink-muted font-body mb-1">Genres you almost never watch, ranked by what's most worth a try.</p>
