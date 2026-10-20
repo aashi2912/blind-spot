@@ -3,6 +3,7 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } fro
 import { GENRES, GENRE_COLORS } from "../utils/constants";
 import { computeBubbleScore } from "../services/bubbleScore";
 import { templateSummary, generateTasteSummary } from "../services/tasteSummary";
+import { shareProfile } from "../utils/shareCard";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Chip from "../components/ui/Chip";
@@ -19,9 +20,17 @@ const PART_LABELS = {
   decade: "One era",
 };
 
+const SHARE_LABEL = {
+  working: "Generating…",
+  shared: "Shared ✓",
+  downloaded: "Image saved + link copied ✓",
+  error: "Couldn't share — try again",
+};
+
 export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoBack }) {
   const [summary, setSummary] = useState(() => (profile ? templateSummary(profile) : ""));
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [shareStatus, setShareStatus] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -30,9 +39,7 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
         if (alive && s) setSummary(s);
       });
     }
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [profile]);
 
   if (!profile) {
@@ -55,6 +62,13 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
     .sort((a, b) => b.weight - a.weight);
   const decadeEntries = Object.entries(decadeDistribution);
   const langEntries = languageConcentration.breakdown.slice(0, 5);
+
+  const handleShare = async () => {
+    setShareStatus("working");
+    const result = await shareProfile(profile, { score, band, summary });
+    setShareStatus(result);
+    setTimeout(() => setShareStatus(null), 2800);
+  };
 
   return (
     <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
@@ -85,8 +99,11 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
           <p className="text-ink-muted font-body mt-3 max-w-md mx-auto">{summary}</p>
         </div>
 
-        {/* How it's scored (explainable) */}
-        <div className="text-center mb-10">
+        {/* Share + explain */}
+        <div className="flex flex-col items-center gap-2 mb-10">
+          <Button variant="accent" onClick={handleShare} disabled={shareStatus === "working"}>
+            {SHARE_LABEL[shareStatus] || "Share my bubble"}
+          </Button>
           <button
             onClick={() => setShowBreakdown((v) => !v)}
             className="text-xs text-primary-soft hover:text-primary font-body underline underline-offset-2"
@@ -94,7 +111,7 @@ export default function BubbleScreen({ profile, watched, onViewBlindSpots, onGoB
             {showBreakdown ? "Hide" : "How is this scored?"}
           </button>
           {showBreakdown && (
-            <Card className="p-4 mt-3 text-left">
+            <Card className="p-4 mt-1 text-left w-full">
               <p className="text-xs text-ink-muted font-body mb-3">
                 Higher means a tighter bubble. It blends four signals from your history:
               </p>
