@@ -1,6 +1,19 @@
 import { useState, useEffect } from "react";
 import { GENRE_COLORS } from "../utils/constants";
-import { detectGenreBlindSpots, detectDecadeBlindSpots, detectLanguageBlindSpots, scoreBlindSpotOpportunities } from "../services/blindSpotDetector";
+import {
+  detectGenreBlindSpots,
+  detectDecadeBlindSpots,
+  detectLanguageBlindSpots,
+  scoreBlindSpotOpportunities,
+} from "../services/blindSpotDetector";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Chip from "../components/ui/Chip";
+
+const PAGE_BG = {
+  backgroundImage:
+    "radial-gradient(55% 40% at 85% 0%, rgba(255,138,91,0.10), transparent 70%), radial-gradient(45% 40% at 0% 100%, rgba(124,92,255,0.12), transparent 70%)",
+};
 
 export default function BlindSpotsScreen({ profile, onExplore, onGoBack }) {
   const [blindSpots, setBlindSpots] = useState([]);
@@ -11,19 +24,11 @@ export default function BlindSpotsScreen({ profile, onExplore, onGoBack }) {
 
   useEffect(() => {
     if (!profile) return;
-
     const genreBS = detectGenreBlindSpots(profile.genreVector);
-    const decBS = detectDecadeBlindSpots(profile.decadeDistribution);
-    const langBS = detectLanguageBlindSpots(profile.languageConcentration);
-
-    setDecadeGaps(decBS);
-    setLangGaps(langBS);
-
-    // Score opportunities (async — queries TMDB Discover)
+    setDecadeGaps(detectDecadeBlindSpots(profile.decadeDistribution));
+    setLangGaps(detectLanguageBlindSpots(profile.languageConcentration));
     setLoading(true);
-    scoreBlindSpotOpportunities(genreBS, "CA", (done, total) => {
-      setProgress({ done, total });
-    })
+    scoreBlindSpotOpportunities(genreBS, "CA", (done, total) => setProgress({ done, total }))
       .then((scored) => {
         setBlindSpots(scored);
         setLoading(false);
@@ -36,116 +41,89 @@ export default function BlindSpotsScreen({ profile, onExplore, onGoBack }) {
 
   if (!profile) {
     return (
-      <div className="text-center py-12">
-        <p className="text-spot-muted font-body">Analyze your taste first.</p>
-        <button onClick={onGoBack} className="mt-4 text-spot-red font-body text-sm">← Go back</button>
+      <div className="min-h-screen bg-void text-ink grid place-items-center px-6" style={PAGE_BG}>
+        <div className="text-center">
+          <p className="text-ink-muted font-body mb-4">Analyze your taste first.</p>
+          <Button variant="ghost" onClick={onGoBack}>Go back</Button>
+        </div>
       </div>
     );
   }
 
+  const live = blindSpots.filter((bs) => bs.netflixCount > 0);
+
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-1">
-        <button onClick={onGoBack} className="text-spot-muted hover:text-white text-sm transition-colors">←</button>
-        <h2 className="text-xl font-extrabold text-white font-display">Your Blind Spots</h2>
+    <div className="min-h-screen bg-void text-ink" style={PAGE_BG}>
+      <div className="max-w-2xl mx-auto px-6 py-8">
+        <button onClick={onGoBack} className="text-sm text-ink-muted hover:text-ink font-body transition-colors mb-6">
+          ← Back to your bubble
+        </button>
+
+        <h1 className="font-brand text-3xl font-bold mb-2">Your blind spots</h1>
+        <p className="text-ink-muted font-body mb-1">Genres you have never explored, ranked by what is worth your time.</p>
+        {!loading && (
+          <p className="text-accent font-body text-sm font-semibold mb-6">
+            {live.length} unexplored {live.length === 1 ? "genre" : "genres"} with strong Netflix picks
+          </p>
+        )}
+
+        {(langGaps?.isConcentrated || decadeGaps.length > 0) && (
+          <div className="mb-6">
+            <p className="text-xs font-bold text-ink-muted mb-2 font-body">Also missing from your taste</p>
+            <div className="flex flex-wrap gap-2">
+              {langGaps?.missingLanguages?.slice(0, 4).map((l) => (
+                <Chip key={l.code} tone="accent">{l.name} cinema</Chip>
+              ))}
+              {decadeGaps.map((d) => (
+                <Chip key={d} tone="accent">{d} films</Chip>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {loading && (
+          <div className="text-center py-10">
+            <div className="flex gap-1.5 justify-center mb-3">
+              <span className="w-2 h-2 rounded-full bg-primary loading-dot" />
+              <span className="w-2 h-2 rounded-full bg-primary loading-dot" />
+              <span className="w-2 h-2 rounded-full bg-primary loading-dot" />
+            </div>
+            <p className="text-sm text-ink-muted font-body">
+              Scanning the Netflix library… {progress.done}/{progress.total}
+            </p>
+          </div>
+        )}
+
+        {!loading &&
+          live.map((bs) => {
+            const oppColor = bs.opportunity > 85 ? "#FF8A5B" : bs.opportunity > 60 ? "#7C5CFF" : "#9AA0B4";
+            return (
+              <Card
+                key={bs.genre.id}
+                className="p-4 mb-3 flex justify-between items-center cursor-pointer hover:border-primary/40 transition-colors"
+                onClick={() => onExplore(bs)}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span
+                      className="text-[11px] font-semibold text-white px-2.5 py-0.5 rounded-md"
+                      style={{ backgroundColor: GENRE_COLORS[bs.genre.id] || "#7C5CFF" }}
+                    >
+                      {bs.genre.name}
+                    </span>
+                    <span className="text-xs text-ink-muted font-body">{bs.netflixCount} on Netflix</span>
+                    <span className="text-xs text-ink-muted font-body">• avg {bs.avgRating}/10</span>
+                  </div>
+                  <p className="text-xs text-ink-muted font-body">Tap to see your bridge in →</p>
+                </div>
+                <div className="text-center ml-3 shrink-0">
+                  <div className="text-2xl font-brand font-bold" style={{ color: oppColor }}>{bs.opportunity}</div>
+                  <div className="text-[8px] text-ink-muted uppercase font-body tracking-wide">opportunity</div>
+                </div>
+              </Card>
+            );
+          })}
       </div>
-      <p className="text-sm text-spot-muted mb-1 font-body">
-        Genres you've never explored, ranked by opportunity
-      </p>
-      {!loading && (
-        <p className="text-xs text-spot-red font-semibold mb-5 font-body">
-          {blindSpots.filter((bs) => bs.netflixCount > 0).length} unexplored genres with Netflix content available
-        </p>
-      )}
-
-      {/* Language + decade gaps */}
-      {(langGaps?.isConcentrated || decadeGaps.length > 0) && (
-        <div className="mb-5">
-          <p className="text-[10px] font-bold text-spot-muted uppercase tracking-wider mb-2 font-body">
-            Also missing
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {langGaps?.missingLanguages?.slice(0, 4).map((l) => (
-              <span
-                key={l.code}
-                className="text-[11px] text-orange-400 bg-orange-400/10 border border-orange-400/20 px-2.5 py-1 rounded-lg font-body"
-              >
-                {l.name} cinema
-              </span>
-            ))}
-            {decadeGaps.map((d) => (
-              <span
-                key={d}
-                className="text-[11px] text-orange-400 bg-orange-400/10 border border-orange-400/20 px-2.5 py-1 rounded-lg font-body"
-              >
-                {d} films
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Loading */}
-      {loading && (
-        <div className="text-center py-8">
-          <div className="flex gap-1 justify-center mb-3">
-            <span className="w-2 h-2 rounded-full bg-spot-red loading-dot" />
-            <span className="w-2 h-2 rounded-full bg-spot-red loading-dot" />
-            <span className="w-2 h-2 rounded-full bg-spot-red loading-dot" />
-          </div>
-          <p className="text-sm text-spot-muted font-body">
-            Scanning Netflix library... {progress.done}/{progress.total}
-          </p>
-        </div>
-      )}
-
-      {/* Blind spot cards — only show genres with Netflix content */}
-      {!loading &&
-        blindSpots.filter((bs) => bs.netflixCount > 0).map((bs) => (
-          <div
-            key={bs.genre.id}
-            onClick={() => onExplore(bs)}
-            className="bg-spot-card rounded-2xl p-4 mb-3 border border-spot-border hover:border-spot-red/30 cursor-pointer transition-colors flex justify-between items-center"
-          >
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span
-                  className="text-[11px] font-semibold text-white px-2.5 py-0.5 rounded-md"
-                  style={{ backgroundColor: GENRE_COLORS[bs.genre.id] || "#666" }}
-                >
-                  {bs.genre.name}
-                </span>
-                <span className="text-xs text-spot-muted font-body">
-                  {bs.netflixCount} titles on Netflix
-                </span>
-                <span className="text-xs text-spot-muted font-body">
-                  • avg {bs.avgRating}/10
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 font-body">
-                Tap to explore bridge recommendations →
-              </p>
-            </div>
-            <div className="text-center ml-3 flex-shrink-0">
-              <div
-                className="text-xl font-extrabold"
-                style={{
-                  color:
-                    bs.opportunity > 85
-                      ? "#dc2626"
-                      : bs.opportunity > 60
-                      ? "#f97316"
-                      : "#888",
-                }}
-              >
-                {bs.opportunity}
-              </div>
-              <div className="text-[8px] text-spot-muted uppercase font-body">
-                opportunity
-              </div>
-            </div>
-          </div>
-        ))}
     </div>
   );
 }

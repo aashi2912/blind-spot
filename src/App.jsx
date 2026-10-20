@@ -9,27 +9,6 @@ import { getWatched, addWatched, removeWatched, updateWatchedKeywords, setProfil
 import { getKeywords } from "./services/tmdbApi";
 import { buildTasteProfile } from "./services/tasteProfiler";
 
-const SCREENS = ["input", "bubble", "blindspots", "bridges", "detail"];
-const SCREEN_LABELS = ["Add Titles", "Your Bubble", "Blind Spots", "Bridges", "Detail"];
-
-function NavBar({ screen, onNav }) {
-  return (
-    <div className="flex gap-0.5 bg-spot-card p-1.5 rounded-2xl mb-5">
-      {SCREENS.map((s, i) => (
-        <button
-          key={s}
-          onClick={() => onNav(s)}
-          className={`flex-1 py-2.5 px-1 rounded-xl text-xs font-bold font-body transition-all ${
-            screen === s ? "bg-spot-red text-white" : "text-spot-muted hover:text-white"
-          }`}
-        >
-          {SCREEN_LABELS[i]}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export default function App() {
   const [screen, setScreen] = useState("landing");
   const [watched, setWatched] = useState([]);
@@ -124,74 +103,56 @@ export default function App() {
     setScreen("bubble");
   }, []);
 
-  // Full-bleed screens on the new design system.
-  if (screen === "landing") {
-    return <LandingScreen onStart={() => nav("input")} />;
+  // Single design system — every screen renders full-bleed.
+  switch (screen) {
+    case "input":
+      return (
+        <InputScreen
+          watched={watched}
+          onAdd={handleAddTitle}
+          onRemove={handleRemoveTitle}
+          onAnalyze={() => nav("bubble")}
+          onImportMany={handleBulkImport}
+          profile={profile}
+        />
+      );
+    case "bubble":
+      return (
+        <BubbleScreen
+          profile={profile}
+          watched={watched}
+          onViewBlindSpots={() => nav("blindspots")}
+          onGoBack={() => nav("input")}
+        />
+      );
+    case "blindspots":
+      return (
+        <BlindSpotsScreen
+          profile={profile}
+          onExplore={handleExploreBlindSpot}
+          onGoBack={() => nav("bubble")}
+        />
+      );
+    case "bridges":
+      return (
+        <BridgeScreen
+          profile={profile}
+          watched={watched}
+          blindSpot={selectedBlindSpot}
+          onViewDetail={handleViewDetail}
+          onGoBack={() => nav("blindspots")}
+        />
+      );
+    case "detail":
+      return (
+        <DetailScreen
+          movie={selectedMovie}
+          watched={watched}
+          onMarkWatched={handleMarkWatched}
+          onGoBack={() => nav("bridges")}
+        />
+      );
+    default:
+      return <LandingScreen onStart={() => nav("input")} />;
   }
-  if (screen === "bubble") {
-    return (
-      <BubbleScreen
-        profile={profile}
-        watched={watched}
-        onViewBlindSpots={() => nav("blindspots")}
-        onGoBack={() => nav("input")}
-      />
-    );
-  }
-
-  // Legacy shell for screens not yet redesigned (input, blindspots, bridges, detail).
-  return (
-    <div className="max-w-md mx-auto px-5 py-5 min-h-screen bg-spot-dark">
-      <div className="flex items-center gap-2 mb-5">
-        <span className="text-xl">🎬</span>
-        <span className="text-lg font-extrabold font-body text-white">Blind Spot</span>
-        <span className="text-[9px] font-bold text-spot-red bg-spot-red/10 px-2 py-0.5 rounded-md font-body ml-1">BETA</span>
-      </div>
-
-      <NavBar screen={screen} onNav={nav} />
-
-      <div className="animate-fade-in">
-        {screen === "input" && (
-          <InputScreen
-            watched={watched}
-            onAdd={handleAddTitle}
-            onRemove={handleRemoveTitle}
-            onAnalyze={() => nav("bubble")}
-            onImportMany={handleBulkImport}
-            profile={profile}
-          />
-        )}
-        {screen === "blindspots" && (
-          <BlindSpotsScreen
-            profile={profile}
-            onExplore={handleExploreBlindSpot}
-            onGoBack={() => nav("bubble")}
-          />
-        )}
-        {screen === "bridges" && (
-          <BridgeScreen
-            profile={profile}
-            watched={watched}
-            blindSpot={selectedBlindSpot}
-            onViewDetail={handleViewDetail}
-            onGoBack={() => nav("blindspots")}
-          />
-        )}
-        {screen === "detail" && (
-          <DetailScreen
-            movie={selectedMovie}
-            watched={watched}
-            onMarkWatched={handleMarkWatched}
-            onGoBack={() => nav("bridges")}
-          />
-        )}
-      </div>
-
-      <div className="mt-8 pt-4 border-t border-spot-border">
-        <p className="text-[10px] text-spot-muted/50 text-center font-body">
-          Blind Spot — See your Netflix filter bubble. Data from TMDB.
-        </p>
-      </div>
-    </div>
-  );
 }
