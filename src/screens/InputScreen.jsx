@@ -69,6 +69,7 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImp
       });
       onImportMany?.(enriched);
       setImportedCount(enriched.length);
+      if (!enriched.length) setImportError("Read your file, but couldn't match any titles. Check your connection and try again.");
     } catch {
       setImportError("Something went wrong reading that file. Try re-downloading it from Netflix.");
     } finally {

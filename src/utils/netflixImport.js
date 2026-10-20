@@ -1,15 +1,18 @@
 /**
  * Netflix viewing-history parser (client-side, no upload).
- * Handles the instant per-profile export (netflix.com/viewingactivity -> Download all)
- * and the richer GDPR ViewingActivity.csv.
  *
- * Two hard problems it solves:
- *  1. Titles concatenate show/season/episode by colon ("Show: Season 1: Ep"),
- *     but real movie titles also contain colons ("Mission: Impossible").
- *  2. Every viewing session is its own row, so a binged series appears many times.
+ * Handles the three real-world title shapes in a Netflix export:
+ *  - Movie: "40 Dates and 40 Nights"            -> kept
+ *  - Movie with subtitle: "The Lost World: Jurassic Park" -> kept (unique prefix)
+ *  - TV, 3+ segments: "Show: Season 1: Episode" -> "Show"
+ *  - TV, 2 segments with marker: "Chumbak: Episode 16" -> "Chumbak"
+ *  - TV, 2 segments with episode NAME: "Musafir Cafe: Arrival" -> "Musafir Cafe"
+ *    (detected because the "Musafir Cafe" prefix recurs across rows)
+ *
+ * Every viewing session is its own row, so titles are collapsed by name and a
+ * play count is kept.
  */
 
-// CSV parser that respects quoted fields and escaped quotes.
 function parseCsvRows(text) {
   const rows = [];
   let row = [], field = "", inQuotes = false;
@@ -32,18 +35,20 @@ function parseCsvRows(text) {
   return rows;
 }
 
-const SEASON_MARKER = /^(Season\s+\d+|Limited Series|Miniseries|Series\s+\d+|Part\s+\d+|Chapter\s+\d+|Book\s+\d+)$/i;
+// Second segment that clearly marks a series structure.
+const EPISODE_MARKER = /^(Season\s+\d+|Limited Series|Miniseries|Series\s+\d+|Part\s+\d+|Chapter\s+\d+|Book\s+\d+|Episode\s+\d+)/i;
 const TRAILER = /\((Trailer|Hook|Teaser|Recap|Preview)\)\s*$/i;
 
-// Reduce a raw Netflix title to its show/film name.
-export function extractBaseTitle(raw) {
+// prefixCount: how many rows share the pre-colon prefix (lets us detect shows
+// whose episodes are named, not numbered).
+export function extractBaseTitle(raw, prefixCount = {}) {
   const parts = raw.split(":").map((s) => s.trim());
-  // TV episodes have 3+ colon segments: "Show: Season 1: Episode Title"
-  if (parts.length >= 3) return parts[0];
-  // 2 segments: only strip if the 2nd is clearly a season/series marker.
-  // Protects movie subtitles ("Mission: Impossible", "Kill Bill: Vol. 1").
-  if (parts.length === 2 && SEASON_MARKER.test(parts[1])) return parts[0];
-  return raw.trim();
+  if (parts.length === 1) return raw.trim();
+  if (parts.length >= 3) return parts[0];           // Show: Season: Episode
+  if (EPISODE_MARKER.test(parts[1])) return parts[0]; // Show: Episode 16 / Season 1
+  const p = parts[0].toLowerCase();
+  if ((prefixCount[p] || 0) >= 2) return parts[0];  // prefix recurs -> it's a show
+  return raw.trim();                                 // unique 2-seg -> movie subtitle
 }
 
 export function parseNetflixCsv(text) {
@@ -58,9 +63,10 @@ export function parseNetflixCsv(text) {
   const hasHeader = header.includes("title") || header.includes("date");
   const start = hasHeader ? 1 : 0;
 
-  const map = new Map();
+  // Pass 1: collect content rows (skip trailers), and count colon-prefixes.
+  const raws = [];
+  const dates = [];
   let trailersSkipped = 0;
-
   for (let i = start; i < rows.length; i++) {
     const raw = (rows[i][titleIdx] || "").trim();
     if (!raw) continue;
@@ -68,10 +74,26 @@ export function parseNetflixCsv(text) {
       trailersSkipped++;
       continue;
     }
-    const base = extractBaseTitle(raw);
-    if (!base) continue;
+    raws.push(raw);
+    dates.push(dateIdx !== -1 ? (rows[i][dateIdx] || "").trim() : "");
+  }
+
+  const prefixCount = {};
+  for (const raw of raws) {
+    const ci = raw.indexOf(":");
+    if (ci > 0) {
+      const p = raw.slice(0, ci).trim().toLowerCase();
+      prefixCount[p] = (prefixCount[p] || 0) + 1;
+    }
+  }
+
+  // Pass 2: reduce to base titles, collapse by name.
+  const map = new Map();
+  raws.forEach((raw, idx) => {
+    const base = extractBaseTitle(raw, prefixCount);
+    if (!base) return;
     const key = base.toLowerCase();
-    const date = dateIdx !== -1 ? (rows[i][dateIdx] || "").trim() : "";
+    const date = dates[idx];
     const existing = map.get(key);
     if (existing) {
       existing.plays++;
@@ -79,8 +101,8 @@ export function parseNetflixCsv(text) {
     } else {
       map.set(key, { title: base, plays: 1, lastWatched: date });
     }
-  }
+  });
 
   const titles = [...map.values()].sort((a, b) => b.plays - a.plays);
-  return { titles, stats: { rawRows: rows.length - start, unique: titles.length, trailersSkipped } };
+  return { titles, stats: { rawRows: raws.length, unique: titles.length, trailersSkipped } };
 }
