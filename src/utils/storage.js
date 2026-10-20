@@ -100,3 +100,9 @@ export function setBridges(genreId, bridges) {
 export function clearAll() {
   Object.values(KEYS).forEach((k) => localStorage.removeItem(k));
 }
+
+// --- Bulk set (used by Netflix CSV import) ---
+export function setWatchedList(list) {
+  set(KEYS.watched, list);
+  return list;
+}

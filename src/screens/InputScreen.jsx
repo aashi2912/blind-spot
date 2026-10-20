@@ -1,13 +1,23 @@
 import { useState, useEffect, useRef } from "react";
 import { searchAll, getTrending, posterUrl } from "../services/tmdbApi";
 import { GENRE_MAP, GENRE_COLORS, MIN_TITLES, GOOD_TITLES } from "../utils/constants";
+import { parseNetflixCsv } from "../utils/netflixImport";
+import { enrichTitles } from "../services/enrichTitles";
 
-export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, profile }) {
+export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, onImportMany, profile }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [trending, setTrending] = useState([]);
   const debounceRef = useRef(null);
+
+  // Netflix import state
+  const fileRef = useRef(null);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ done: 0, total: 0, matched: 0 });
+  const [importError, setImportError] = useState("");
+  const [importedCount, setImportedCount] = useState(0);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Load trending on mount
   useEffect(() => {
@@ -28,7 +38,6 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, profi
       setSearching(true);
       try {
         const res = await searchAll(query);
-        // Filter out already watched
         const watchedIds = new Set(watched.map((w) => w.id + ":" + w.media_type));
         setResults(res.filter((r) => !watchedIds.has(r.id + ":" + r.media_type)));
       } catch {
@@ -39,6 +48,34 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, profi
 
     return () => clearTimeout(debounceRef.current);
   }, [query, watched]);
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError("");
+    setImportedCount(0);
+    try {
+      const text = await file.text();
+      const { titles } = parseNetflixCsv(text);
+      if (!titles.length) {
+        setImportError("Could not find titles in that file. Make sure it is your Netflix viewing-activity CSV.");
+        return;
+      }
+      setImporting(true);
+      setImportProgress({ done: 0, total: titles.length, matched: 0 });
+      const enriched = await enrichTitles(titles, {
+        concurrency: 5,
+        onProgress: (p) => setImportProgress(p),
+      });
+      onImportMany?.(enriched);
+      setImportedCount(enriched.length);
+    } catch {
+      setImportError("Something went wrong reading that file. Try re-downloading it from Netflix.");
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   const watchedIds = new Set(watched.map((w) => w.id + ":" + (w.media_type || "movie")));
   const progress = Math.min(watched.length / GOOD_TITLES, 1);
@@ -62,8 +99,87 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, profi
         What have you been watching?
       </h2>
       <p className="text-sm text-spot-muted mb-5 font-body">
-        Search and add titles to build your taste profile
+        Import your Netflix history, or search and add titles
       </p>
+
+      {/* Netflix import (primary) */}
+      <div className="bg-spot-card border border-spot-border rounded-2xl p-5 mb-4">
+        <h3 className="text-base font-bold text-white font-body mb-1">Import your Netflix history</h3>
+        <p className="text-xs text-spot-muted font-body mb-3">
+          One file, everything at once. Read in your browser, never uploaded.
+        </p>
+
+        {!importing && (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={handleFile}
+            />
+            <button
+              onClick={() => fileRef.current && fileRef.current.click()}
+              className="w-full py-3 rounded-xl bg-spot-red text-white text-sm font-bold font-body active:scale-[0.98] transition-transform"
+            >
+              Choose your Netflix file
+            </button>
+            <button
+              onClick={() => setShowHelp((v) => !v)}
+              className="mt-2 text-xs text-spot-muted hover:text-white font-body underline underline-offset-2"
+            >
+              How do I get this file?
+            </button>
+            {showHelp && (
+              <ol className="mt-2 text-xs text-spot-muted font-body list-decimal pl-4 space-y-1">
+                <li>Go to netflix.com/viewingactivity (on the profile you want).</li>
+                <li>Scroll to the bottom and click "Download all".</li>
+                <li>Upload the NetflixViewingHistory.csv file here.</li>
+              </ol>
+            )}
+          </>
+        )}
+
+        {importing && (
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-1.5 bg-spot-border rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-spot-red rounded-full transition-all duration-300"
+                  style={{
+                    width:
+                      (importProgress.total
+                        ? (importProgress.done / importProgress.total) * 100
+                        : 0) + "%",
+                  }}
+                />
+              </div>
+              <span className="text-xs text-spot-muted font-body whitespace-nowrap">
+                {importProgress.done}/{importProgress.total}
+              </span>
+            </div>
+            <p className="text-xs text-spot-muted font-body mt-2">
+              Matching your titles… {importProgress.matched} found
+            </p>
+          </div>
+        )}
+
+        {importError && <p className="text-xs text-red-400 font-body mt-2">{importError}</p>}
+        {importedCount > 0 && !importing && (
+          <p className="text-xs text-green-400 font-body mt-2">
+            ✓ Imported {importedCount} titles from your history.
+          </p>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex-1 h-px bg-spot-border" />
+        <span className="text-[10px] text-spot-muted font-body uppercase tracking-wider">
+          or add manually
+        </span>
+        <div className="flex-1 h-px bg-spot-border" />
+      </div>
 
       {/* Search */}
       <div className="relative mb-4">
@@ -84,7 +200,6 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, profi
           </div>
         )}
 
-        {/* Search results dropdown */}
         {results.length > 0 && (
           <div className="absolute top-full left-0 right-0 bg-spot-card border border-spot-border rounded-xl mt-1 z-20 max-h-72 overflow-y-auto shadow-2xl">
             {results.slice(0, 8).map((r) => (
@@ -247,10 +362,7 @@ export default function InputScreen({ watched, onAdd, onRemove, onAnalyze, profi
           </p>
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
             {trending
-              .filter(
-                (t) =>
-                  !watchedIds.has(t.id + ":movie")
-              )
+              .filter((t) => !watchedIds.has(t.id + ":movie"))
               .slice(0, 8)
               .map((t) => (
                 <div

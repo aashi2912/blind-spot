@@ -5,7 +5,7 @@ import BubbleScreen from "./screens/BubbleScreen";
 import BlindSpotsScreen from "./screens/BlindSpotsScreen";
 import BridgeScreen from "./screens/BridgeScreen";
 import DetailScreen from "./screens/DetailScreen";
-import { getWatched, addWatched, removeWatched, updateWatchedKeywords, setProfile } from "./utils/storage";
+import { getWatched, addWatched, removeWatched, updateWatchedKeywords, setProfile, setWatchedList } from "./utils/storage";
 import { getKeywords } from "./services/tmdbApi";
 import { buildTasteProfile } from "./services/tasteProfiler";
 
@@ -58,7 +58,6 @@ export default function App() {
     const updated = addWatched(title);
     setWatched([...updated]);
 
-    // Fetch keywords in background
     try {
       const kws = await getKeywords(title.id, title.media_type);
       const withKws = updateWatchedKeywords(title.id, title.media_type, kws);
@@ -66,6 +65,38 @@ export default function App() {
     } catch (err) {
       console.warn("Keyword fetch failed for", title.title, err);
     }
+  }, []);
+
+  // Bulk import from Netflix CSV (already enriched with genres by InputScreen)
+  const handleBulkImport = useCallback((titles) => {
+    const current = getWatched();
+    const seen = new Set(current.map((t) => t.id + ":" + t.media_type));
+    const merged = [...current];
+    for (const t of titles) {
+      const k = t.id + ":" + t.media_type;
+      if (!seen.has(k)) {
+        seen.add(k);
+        merged.push(t);
+      }
+    }
+    setWatchedList(merged);
+    setWatched([...merged]);
+
+    // Background: fill keywords for the most-watched subset so the themes panel populates.
+    (async () => {
+      const top = [...titles]
+        .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
+        .slice(0, 20);
+      for (const t of top) {
+        try {
+          const kws = await getKeywords(t.id, t.media_type);
+          const upd = updateWatchedKeywords(t.id, t.media_type, kws);
+          setWatched([...upd]);
+        } catch {
+          /* ignore */
+        }
+      }
+    })();
   }, []);
 
   // Remove a title
@@ -132,6 +163,7 @@ export default function App() {
             onAdd={handleAddTitle}
             onRemove={handleRemoveTitle}
             onAnalyze={() => nav("bubble")}
+            onImportMany={handleBulkImport}
             profile={profile}
           />
         )}
