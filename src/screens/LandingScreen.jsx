@@ -15,24 +15,13 @@ function Orbit() {
       <circle cx="210" cy="210" r="84" stroke="#272B3D" strokeWidth="1" fill="none" />
       <circle cx="210" cy="210" r="150" fill="url(#bs-glow)" />
       <g fill="#7C5CFF">
-        <circle cx="150" cy="150" r="12" />
-        <circle cx="188" cy="120" r="9" />
-        <circle cx="128" cy="196" r="8" />
-        <circle cx="176" cy="180" r="14" />
-        <circle cx="212" cy="152" r="7" />
-        <circle cx="146" cy="112" r="6" />
+        <circle cx="150" cy="150" r="12" /><circle cx="188" cy="120" r="9" /><circle cx="128" cy="196" r="8" />
+        <circle cx="176" cy="180" r="14" /><circle cx="212" cy="152" r="7" /><circle cx="146" cy="112" r="6" />
       </g>
-      <g fill="#A594FF" opacity="0.8">
-        <circle cx="228" cy="196" r="6" />
-        <circle cx="196" cy="224" r="5" />
-      </g>
+      <g fill="#A594FF" opacity="0.8"><circle cx="228" cy="196" r="6" /><circle cx="196" cy="224" r="5" /></g>
       <g fill="#3A3F55">
-        <circle cx="300" cy="150" r="5" />
-        <circle cx="318" cy="230" r="6" />
-        <circle cx="150" cy="300" r="5" />
-        <circle cx="250" cy="312" r="5" />
-        <circle cx="110" cy="260" r="4" />
-        <circle cx="288" cy="286" r="4" />
+        <circle cx="300" cy="150" r="5" /><circle cx="318" cy="230" r="6" /><circle cx="150" cy="300" r="5" />
+        <circle cx="250" cy="312" r="5" /><circle cx="110" cy="260" r="4" /><circle cx="288" cy="286" r="4" />
       </g>
       <line x1="176" y1="180" x2="300" y2="300" stroke="#FF8A5B" strokeWidth="1.5" strokeDasharray="4 5" opacity="0.7" />
       <circle cx="300" cy="300" r="10" fill="#FF8A5B" />
@@ -47,7 +36,7 @@ const STEPS = [
   { n: "03", title: "Find the way out", body: "One reasoned recommendation from a genre you avoid, tied to something you already love.", out: true },
 ];
 
-export default function LandingScreen({ onStart }) {
+export default function LandingScreen({ onStart, onSample }) {
   const bg = {
     backgroundImage:
       "radial-gradient(60% 50% at 78% 8%, rgba(124,92,255,0.16), transparent 70%), radial-gradient(45% 40% at 12% 95%, rgba(255,138,91,0.08), transparent 70%)",
@@ -55,7 +44,6 @@ export default function LandingScreen({ onStart }) {
   return (
     <div className="min-h-screen bg-void text-ink" style={bg}>
       <div className="max-w-6xl mx-auto px-6 md:px-8">
-        {/* Header */}
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-2.5 font-bold text-lg">
             <svg viewBox="0 0 26 26" className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -71,7 +59,6 @@ export default function LandingScreen({ onStart }) {
           </nav>
         </header>
 
-        {/* Hero */}
         <section className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center py-12 lg:py-16">
           <div>
             <p className="text-primary-soft font-semibold mb-5">Your streaming taste, seen clearly</p>
@@ -83,19 +70,16 @@ export default function LandingScreen({ onStart }) {
             </p>
             <div className="flex flex-wrap gap-3.5 mt-9">
               <Button size="lg" onClick={onStart}>Reveal my bubble</Button>
-              <Button as="a" href="#how" variant="ghost" size="lg">See how it works</Button>
+              <Button variant="ghost" size="lg" onClick={onSample}>See a sample</Button>
             </div>
             <p className="flex items-center gap-2 text-ink-muted text-sm mt-5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#3ddc97]" />
               Import your Netflix history. Nothing leaves your browser.
             </p>
           </div>
-          <div className="flex justify-center lg:justify-end">
-            <Orbit />
-          </div>
+          <div className="flex justify-center lg:justify-end"><Orbit /></div>
         </section>
 
-        {/* How it works */}
         <section id="how" className="pb-20 pt-4 scroll-mt-8">
           <h2 className="font-brand text-ink-muted text-sm font-semibold mb-7">How it works</h2>
           <div className="grid md:grid-cols-3 gap-5">

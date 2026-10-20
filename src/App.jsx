@@ -5,9 +5,13 @@ import BubbleScreen from "./screens/BubbleScreen";
 import BlindSpotsScreen from "./screens/BlindSpotsScreen";
 import BridgeScreen from "./screens/BridgeScreen";
 import DetailScreen from "./screens/DetailScreen";
+import OnboardingTour from "./components/OnboardingTour";
 import { getWatched, addWatched, removeWatched, updateWatchedKeywords, setProfile, setWatchedList } from "./utils/storage";
 import { getKeywords } from "./services/tmdbApi";
 import { buildTasteProfile } from "./services/tasteProfiler";
+import { SAMPLE_WATCHED } from "./utils/sampleData";
+
+const TOUR_KEY = "blind-spot:seen-tour";
 
 export default function App() {
   const [screen, setScreen] = useState("landing");
@@ -15,6 +19,9 @@ export default function App() {
   const [profile, setProfileState] = useState(null);
   const [selectedBlindSpot, setSelectedBlindSpot] = useState(null);
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [showTour, setShowTour] = useState(() => {
+    try { return !localStorage.getItem(TOUR_KEY); } catch { return false; }
+  });
 
   useEffect(() => {
     setWatched(getWatched());
@@ -27,6 +34,11 @@ export default function App() {
       setProfile(p);
     }
   }, [watched]);
+
+  const closeTour = useCallback(() => {
+    try { localStorage.setItem(TOUR_KEY, "1"); } catch { /* ignore */ }
+    setShowTour(false);
+  }, []);
 
   const handleAddTitle = useCallback(async (title) => {
     const updated = addWatched(title);
@@ -46,10 +58,7 @@ export default function App() {
     const merged = [...current];
     for (const t of titles) {
       const k = t.id + ":" + t.media_type;
-      if (!seen.has(k)) {
-        seen.add(k);
-        merged.push(t);
-      }
+      if (!seen.has(k)) { seen.add(k); merged.push(t); }
     }
     setWatchedList(merged);
     setWatched([...merged]);
@@ -60,16 +69,19 @@ export default function App() {
           const kws = await getKeywords(t.id, t.media_type);
           const upd = updateWatchedKeywords(t.id, t.media_type, kws);
           setWatched([...upd]);
-        } catch {
-          /* ignore */
-        }
+        } catch { /* ignore */ }
       }
     })();
   }, []);
 
+  // Sample mode — load a prebuilt history (in memory only) and jump to the Reveal.
+  const handleSample = useCallback(() => {
+    setWatched(SAMPLE_WATCHED);
+    setScreen("bubble");
+  }, []);
+
   const handleRemoveTitle = useCallback((id, mediaType) => {
-    const updated = removeWatched(id, mediaType);
-    setWatched([...updated]);
+    setWatched([...removeWatched(id, mediaType)]);
   }, []);
 
   const nav = useCallback((s) => setScreen(s), []);
@@ -98,61 +110,40 @@ export default function App() {
       overview: movie.overview || "",
       keywords: movie.keywords || [],
     };
-    const updated = addWatched(title);
-    setWatched([...updated]);
+    setWatched([...addWatched(title)]);
     setScreen("bubble");
   }, []);
 
-  // Single design system — every screen renders full-bleed.
-  switch (screen) {
-    case "input":
-      return (
-        <InputScreen
-          watched={watched}
-          onAdd={handleAddTitle}
-          onRemove={handleRemoveTitle}
-          onAnalyze={() => nav("bubble")}
-          onImportMany={handleBulkImport}
-          profile={profile}
-        />
-      );
-    case "bubble":
-      return (
-        <BubbleScreen
-          profile={profile}
-          watched={watched}
-          onViewBlindSpots={() => nav("blindspots")}
-          onGoBack={() => nav("input")}
-        />
-      );
-    case "blindspots":
-      return (
-        <BlindSpotsScreen
-          profile={profile}
-          onExplore={handleExploreBlindSpot}
-          onGoBack={() => nav("bubble")}
-        />
-      );
-    case "bridges":
-      return (
-        <BridgeScreen
-          profile={profile}
-          watched={watched}
-          blindSpot={selectedBlindSpot}
-          onViewDetail={handleViewDetail}
-          onGoBack={() => nav("blindspots")}
-        />
-      );
-    case "detail":
-      return (
-        <DetailScreen
-          movie={selectedMovie}
-          watched={watched}
-          onMarkWatched={handleMarkWatched}
-          onGoBack={() => nav("bridges")}
-        />
-      );
-    default:
-      return <LandingScreen onStart={() => nav("input")} />;
-  }
+  const renderScreen = () => {
+    switch (screen) {
+      case "input":
+        return (
+          <InputScreen
+            watched={watched}
+            onAdd={handleAddTitle}
+            onRemove={handleRemoveTitle}
+            onAnalyze={() => nav("bubble")}
+            onImportMany={handleBulkImport}
+            profile={profile}
+          />
+        );
+      case "bubble":
+        return <BubbleScreen profile={profile} watched={watched} onViewBlindSpots={() => nav("blindspots")} onGoBack={() => nav("input")} />;
+      case "blindspots":
+        return <BlindSpotsScreen profile={profile} onExplore={handleExploreBlindSpot} onGoBack={() => nav("bubble")} />;
+      case "bridges":
+        return <BridgeScreen profile={profile} watched={watched} blindSpot={selectedBlindSpot} onViewDetail={handleViewDetail} onGoBack={() => nav("blindspots")} />;
+      case "detail":
+        return <DetailScreen movie={selectedMovie} watched={watched} onMarkWatched={handleMarkWatched} onGoBack={() => nav("bridges")} />;
+      default:
+        return <LandingScreen onStart={() => nav("input")} onSample={handleSample} />;
+    }
+  };
+
+  return (
+    <>
+      {renderScreen()}
+      {showTour && <OnboardingTour onClose={closeTour} />}
+    </>
+  );
 }
