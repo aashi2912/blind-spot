@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { GENRE_COLORS } from "../utils/constants";
 import { posterUrl } from "../services/tmdbApi";
-import { findBridgeCandidates, generateBridgeReasoning, getBridgeStrength } from "../services/bridgeEngine";
+import { findBridgeCandidates, generateBridgeReasoning, getBridgeStrength, fallbackReasoning } from "../services/bridgeEngine";
 import { getBridges, setBridges, getWatchlist, setWatchlistStatus } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -22,6 +22,7 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
   const [loading, setLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState("Finding picks…");
   const [reasonings, setReasonings] = useState({});
+  const [reasoningLoading, setReasoningLoading] = useState({});
   const [expanded, setExpanded] = useState(0);
   const [statusMap, setStatusMap] = useState(() => {
     const m = {};
@@ -29,38 +30,60 @@ export default function BridgeScreen({ profile, watched, blindSpot, onViewDetail
     return m;
   });
 
+  // Load candidates (TMDB only). Reasoning is generated lazily, per expanded
+  // card — not up front for all 5 — so opening a genre costs ~1 LLM call, not 5.
   useEffect(() => {
     if (!blindSpot || !profile) return;
     const cached = getBridges(blindSpot.genre.id);
     if (cached) {
       setCandidates(cached.candidates);
-      setReasonings(cached.reasonings);
+      setReasonings(cached.reasonings || {});
       setLoading(false);
       return;
     }
+    let alive = true;
     setLoading(true);
     findBridgeCandidates(blindSpot.genre.id, profile, "US", (msg) => setLoadingMsg(msg))
-      .then(async (results) => {
+      .then((results) => {
+        if (!alive) return;
         setCandidates(results);
         setLoading(false);
-        const newReasonings = {};
-        for (const candidate of results) {
-          try {
-            const reasoning = await generateBridgeReasoning(watched, candidate);
-            if (reasoning) {
-              newReasonings[candidate.id] = reasoning;
-              setReasonings((prev) => ({ ...prev, [candidate.id]: reasoning }));
-            }
-          } catch { /* fallback handled inside */ }
-          await new Promise((r) => setTimeout(r, 500));
-        }
-        setBridges(blindSpot.genre.id, { candidates: results, reasonings: newReasonings });
+        setBridges(blindSpot.genre.id, { candidates: results, reasonings: {} });
       })
       .catch(() => {
+        if (!alive) return;
         setCandidates([]);
         setLoading(false);
       });
-  }, [blindSpot, profile, watched]);
+    return () => { alive = false; };
+  }, [blindSpot, profile]);
+
+  // Lazily fetch reasoning for whichever card is expanded (default: the top pick).
+  useEffect(() => {
+    const movie = candidates[expanded];
+    if (!movie) return;
+    if (reasonings[movie.id] !== undefined || reasoningLoading[movie.id]) return;
+    let alive = true;
+    setReasoningLoading((p) => ({ ...p, [movie.id]: true }));
+    generateBridgeReasoning(watched, movie)
+      .then((text) => {
+        if (!alive) return;
+        // null = genuine no-fit (NO_BRIDGE); show the plain template so the card
+        // always resolves instead of spinning forever.
+        const reasoning = text || fallbackReasoning(movie);
+        setReasonings((prev) => {
+          const next = { ...prev, [movie.id]: reasoning };
+          const stored = getBridges(blindSpot.genre.id) || { candidates, reasonings: {} };
+          setBridges(blindSpot.genre.id, { candidates: stored.candidates || candidates, reasonings: next });
+          return next;
+        });
+      })
+      .finally(() => {
+        if (!alive) return;
+        setReasoningLoading((p) => { const n = { ...p }; delete n[movie.id]; return n; });
+      });
+    return () => { alive = false; };
+  }, [expanded, candidates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setStatus = (movie, status) => {
     setWatchlistStatus(movie, status);

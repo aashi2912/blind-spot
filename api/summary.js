@@ -1,21 +1,45 @@
 /**
  * Vercel Serverless Function — one-line AI taste summary for the Reveal.
- * Mirrors api/bridge.js: key stays server-side, graceful fallback flag.
+ * Mirrors api/bridge.js: origin lock, rate limit, cache, and diagnostic
+ * `reason` on fallback so prod failures are visible instead of silent.
  */
+import {
+  originAllowed,
+  rateLimited,
+  cacheGet,
+  cacheSet,
+  hash,
+  resolveKey,
+  resolveModel,
+} from "../lib/llmGuard.js";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+  if (!originAllowed(req)) {
+    return res.status(403).json({ summary: null, fallback: true, reason: "forbidden_origin" });
+  }
+  if (rateLimited(req)) {
+    return res.status(429).json({ summary: null, fallback: true, reason: "rate_limited" });
+  }
 
-  const apiKey = process.env.LLM_API_KEY;
+  const { titleCount, topGenres = [], topDecade, language } = req.body || {};
+  const genreLine = topGenres.map((g) => `${g.name} ${g.pct}%`).join(", ");
+
+  const cacheKey =
+    "s:" + hash(JSON.stringify({ titleCount, genreLine, topDecade, language }));
+  const hit = cacheGet(cacheKey);
+  if (hit !== undefined) {
+    return res.status(200).json({ summary: hit, cached: true });
+  }
+
+  const apiKey = resolveKey();
   if (!apiKey) {
-    return res.status(200).json({ summary: null, fallback: true });
+    return res.status(200).json({ summary: null, fallback: true, reason: "no_key" });
   }
 
   try {
-    const { titleCount, topGenres = [], topDecade, language } = req.body || {};
-    const genreLine = topGenres.map((g) => `${g.name} ${g.pct}%`).join(", ");
-
     const prompt = [
       "You describe a person's streaming taste as a single vivid one-line identity.",
       "",
@@ -37,21 +61,32 @@ export default async function handler(req, res) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: resolveModel(),
         max_tokens: 60,
         messages: [{ role: "user", content: prompt }],
       }),
     });
 
     if (!response.ok) {
-      return res.status(200).json({ summary: null, fallback: true });
+      let detail = "";
+      try {
+        detail = (await response.text()).slice(0, 180);
+      } catch {}
+      return res
+        .status(200)
+        .json({ summary: null, fallback: true, reason: "upstream_" + response.status, detail });
     }
 
     const data = await response.json();
     const summary = data.content?.[0]?.text || null;
+    if (summary) cacheSet(cacheKey, summary);
     return res.status(200).json({ summary });
   } catch (error) {
-    console.error("Summary error:", error);
-    return res.status(200).json({ summary: null, fallback: true });
+    return res.status(200).json({
+      summary: null,
+      fallback: true,
+      reason: "exception",
+      detail: String((error && error.message) || error).slice(0, 180),
+    });
   }
 }
