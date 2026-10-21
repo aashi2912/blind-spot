@@ -61,7 +61,7 @@ export default async function handler(req, res) {
       "- Synopsis: " + candidate.overview,
       "- Rating: " + candidate.rating + "/10",
       "",
-      "Write 2-3 sentences explaining WHY this person would enjoy this movie.",
+      "Write 2-3 sentences of plain prose explaining WHY this person would enjoy this movie. Start directly with the reason. No markdown, asterisks, bold, or headings.",
       "Focus on THEMATIC connections to their existing taste — not just genre similarity.",
       "Connect specific qualities they love to specific qualities in this candidate.",
       "",
